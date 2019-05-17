@@ -96,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
                 bundle.putString("text", "test_text");
                 bundle.putString("info", "test_info");
                 bundle.putLong(FirebaseAnalytics.Param.VALUE, 1);
-                bundle.putString("currency", "rub");
                 analytics.logEvent("test_conversion", bundle);
                 /*bundle = new Bundle();
                 bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "item_id!");
@@ -170,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
         this.days = days;
         periodFragment = new PeriodFragment();
         periodFragment.subjects = subjects;
-        TheSingleton.getInstance().setSubjects(subjects);
-        TheSingleton.getInstance().setDays(days);
     }
 
     void loadFragment(Fragment fragment) {
@@ -201,36 +198,31 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         log("fragments on MainActivity: " + getSupportFragmentManager().getBackStackEntryCount());
-        if(getStackTop() instanceof ChatFragment) {
+        List<Fragment> a = getSupportFragmentManager().getFragments();
+        if(a.get(a.size()-1) instanceof ChatFragment) {
             log("last in stack = ChatFragment");
             set_visible(true);
             getSupportActionBar().setTitle("Messages");
             getSupportActionBar().setHomeButtonEnabled(false);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             getSupportActionBar().setDisplayShowHomeEnabled(false);
-        } else if (getStackTop() instanceof DayFragment) {
+        } else if (a.get(a.size() - 1) instanceof DayFragment) {
             log("last in stack = DayFragment");
             set_visible(true);
             getSupportActionBar().setTitle("Diary");
             getSupportActionBar().setHomeButtonEnabled(false);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             getSupportActionBar().setDisplayShowHomeEnabled(false);
-        } else if(getStackTop() instanceof MarkFragment) {
+        } else if(a.get(a.size() - 1) instanceof MarkFragment) {
             log("last in stack = MarkFragment");
-            getSupportActionBar().setTitle("Period");
-            getSupportActionBar().setHomeButtonEnabled(false);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            getSupportActionBar().setDisplayShowHomeEnabled(false);
-        } else if(getStackTop() instanceof SubjectFragment) {
-            log("last in stack = SubjectFragment");
             getSupportActionBar().setTitle("Period");
             getSupportActionBar().setHomeButtonEnabled(false);
             getSupportActionBar().setDisplayHomeAsUpEnabled(false);
             getSupportActionBar().setDisplayShowHomeEnabled(false);
         }
         if(!(getSupportFragmentManager().getBackStackEntryCount() == 0))
-            if(!(getStackTop() instanceof PeriodFragment || getStackTop() instanceof ScheduleFragment
-                    || getStackTop() instanceof MessagesFragment))
+            if(!(a.get(a.size()-1) instanceof PeriodFragment || a.get(a.size()-1) instanceof ScheduleFragment
+                    || a.get(a.size()-1) instanceof MessagesFragment))
                 getSupportFragmentManager().popBackStack();
     }
 

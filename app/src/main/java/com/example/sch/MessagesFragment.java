@@ -305,6 +305,7 @@ public class MessagesFragment extends Fragment {
         }
         container1.removeAllViews();
 
+
         View item;
         TextView tv;
         ImageView img;

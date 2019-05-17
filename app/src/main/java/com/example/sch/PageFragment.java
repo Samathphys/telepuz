@@ -3,8 +3,6 @@ package com.example.sch;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.text.Spannable;
@@ -24,7 +22,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import static com.example.sch.LoginActivity.log;
-import static com.example.sch.LoginActivity.loge;
 
 public class PageFragment extends Fragment {
 
@@ -43,31 +40,22 @@ public class PageFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_page, container, false);
+        View v = inflater.inflate(R.layout.fragment_page, null);
         tableLayout = v.findViewById(R.id.table);
         if (day != null) {
             tableLayout.setColumnStretchable(1, true);
             tableLayout.setColumnShrinkable(1, true);
             CreateTable();
         } else {
-            TableRow tbrow1 = new TableRow(getContext());
+            TableRow tbrow1 = new TableRow(getActivity().getApplicationContext());
             tbrow1.setLayoutParams(new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT,
                     TableLayout.LayoutParams.WRAP_CONTENT));
-            TextView tv1 = new TextView(getContext());
+            TextView tv1 = new TextView(getActivity().getApplicationContext());
             tv1.setText("12345");
             tbrow1.addView(tv1);
             tableLayout.addView(tbrow1);
         }
         return v;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
     }
 
     public void CreateTable() {
@@ -179,6 +167,7 @@ public class PageFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        log("onAttach");
     }
 
     @Override

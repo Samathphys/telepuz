@@ -8,8 +8,6 @@ class TheSingleton {
     private static final TheSingleton ourInstance = new TheSingleton();
     private String COOKIE, ROUTE, fb_id;
     private int USER_ID, PERSON_ID;
-    private ArrayList<PeriodFragment.Subject> subjects;
-    private ArrayList<PeriodFragment.Day> days;
 
     static TheSingleton getInstance() {
         return ourInstance;
@@ -55,21 +53,5 @@ class TheSingleton {
 
     void setFb_id(String fb_id) {
         this.fb_id = fb_id;
-    }
-
-    public ArrayList<PeriodFragment.Subject> getSubjects() {
-        return subjects;
-    }
-
-    public void setSubjects(ArrayList<PeriodFragment.Subject> subjects) {
-        this.subjects = subjects;
-    }
-
-    public ArrayList<PeriodFragment.Day> getDays() {
-        return days;
-    }
-
-    public void setDays(ArrayList<PeriodFragment.Day> days) {
-        this.days = days;
     }
 }

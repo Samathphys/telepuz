@@ -43,8 +43,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import static com.example.sch.LoginActivity.log;
-import static com.example.sch.LoginActivity.loge;
 import static java.lang.Thread.sleep;
 
 public class ScheduleFragment extends Fragment {
@@ -68,7 +66,6 @@ public class ScheduleFragment extends Fragment {
     int index;
     int lastposition;
     ArrayList<PageFragment> pageFragments;
-    View v;
 
     public ScheduleFragment () {
         datenow = new Date();
@@ -80,6 +77,7 @@ public class ScheduleFragment extends Fragment {
         for (int i = 0; i < pageCount; i++) {
             pageFragments.add(new PageFragment());
         }
+
     }
 
     static void sasha(String s) {
@@ -97,16 +95,22 @@ public class ScheduleFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_schedule, container, false);
         if (first) {
-            log("first");
-            v = inflater.inflate(R.layout.fragment_schedule, container, false);
             while (true) {
                 try {
                     sleep(10);
                     if (ready)
                         break;
-                } catch (InterruptedException ignore) {}
+                } catch (InterruptedException e) {
+                }
+
             }
             for (int i = 0; i < pageCount; i++) {
                 pageFragments.get(i).subjects = subjects;
@@ -129,8 +133,8 @@ public class ScheduleFragment extends Fragment {
                 }
             }
             index = 0;
-            Calendar calendar1 = Calendar.getInstance();
             for (int i = daynum; i < pageCount; i++) {
+                Calendar calendar1 = Calendar.getInstance();
                 calendar1.setTimeInMillis(days.get(index).daymsec);
                 int C = calendar1.get(Calendar.DAY_OF_YEAR);
                 if (C == pageFragments.get(i).dayofyear) {
@@ -142,76 +146,77 @@ public class ScheduleFragment extends Fragment {
                     }
                 }
             }
-            pager = v.findViewById(R.id.pager);
-            //pager.setOffscreenPageLimit(0);
-            pagerAdapter = new MyFragmentPagerAdapter(getFragmentManager());
-            pager.setAdapter(pagerAdapter);
-            pager.setCurrentItem(0);
-            pager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-                @Override
-                public void onPageSelected(int position) {
+        }
+        linear1 = v.findViewById(R.id.liner1);
+        linear1.setWeightSum(1);
+        pager = v.findViewById(R.id.pager);
+        pagerAdapter = new MyFragmentPagerAdapter(getFragmentManager());
+        pager.setAdapter(pagerAdapter);
+        pager.setCurrentItem(0);
+        for (int i = 0; i < 7; i++) {
+            tv[i] = new TextView(getActivity().getApplicationContext());
+            tv[i].setId(i);
+            tv[i].setGravity(Gravity.CENTER);
+            tv[i].setTextColor(Color.WHITE);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(datenow);
+            calendar.add(Calendar.DAY_OF_MONTH, i + 1 - day);
+            String s = days1[i] + "\n" + calendar.get(Calendar.DAY_OF_MONTH);
+            Spannable spans = new SpannableString(s);
+            spans.setSpan(new RelativeSizeSpan(3f), 0, s.indexOf("\n"), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+            spans.setSpan(new ForegroundColorSpan(Color.WHITE), 0, s.indexOf("\n"), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spans.setSpan(new ForegroundColorSpan(Color.WHITE), s.indexOf("\n"), s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv[i].setText(days1[i]);
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            p.weight = (float) 1 / 7;
+            tv[i].setLayoutParams(p);
+            final int finalI = i;
+            tv[i].setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    pager.setCurrentItem(pager.getCurrentItem() - (day - finalI - 1));
+                    day = finalI + 1;
                     okras(tv);
-                    day -= lastposition - position;
-                    if (day < 1) {
-                        day = 7;
-                    }
-                    if (day > 7) {
-                        day = 1;
-                    }
-                    tv[day - 1].setBackground(getResources().getDrawable(R.drawable.cell_phone1));
-                    tv[day - 1].setTextColor(Color.BLACK);
-                    lastposition = pager.getCurrentItem();
-
-                    sasha(String.valueOf(position));
-                }
-                @Override
-                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                }
-
-                @Override
-                public void onPageScrollStateChanged(int state) {
+                    tv[finalI].setBackground(getResources().getDrawable(R.drawable.cell_phone1));
+                    tv[finalI].setTextColor(Color.BLACK);
                 }
             });
-            linear1 = v.findViewById(R.id.liner1);
-            linear1.setWeightSum(1);
-            for (int i = 0; i < 7; i++) {
-                tv[i] = new TextView(getContext());
-                tv[i].setId(i);
-                tv[i].setGravity(Gravity.CENTER);
-                tv[i].setTextColor(Color.WHITE);
-                calendar = Calendar.getInstance();
-                calendar.setTime(datenow);
-                calendar.add(Calendar.DAY_OF_MONTH, i + 1 - day);
-                String s = days1[i] + "\n" + calendar.get(Calendar.DAY_OF_MONTH);
-                Spannable spans = new SpannableString(s);
-                spans.setSpan(new RelativeSizeSpan(3f), 0, s.indexOf("\n"), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
-                spans.setSpan(new ForegroundColorSpan(Color.WHITE), 0, s.indexOf("\n"), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                spans.setSpan(new ForegroundColorSpan(Color.WHITE), s.indexOf("\n"), s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                tv[i].setText(days1[i]);
-                LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                p.weight = (float) 1 / 7;
-                tv[i].setLayoutParams(p);
-                final int finalI = i;
-                tv[i].setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View v) {
-                        pager.setCurrentItem(pager.getCurrentItem() - (day - finalI - 1));
-                        day = finalI + 1;
-                        okras(tv);
-                        tv[finalI].setBackground(getResources().getDrawable(R.drawable.cell_phone1));
-                        tv[finalI].setTextColor(Color.BLACK);
-                    }
-                });
-                linear1.addView(tv[i]);
-            }
-            tv[day - 1].setBackground(getResources().getDrawable(R.drawable.cell_phone1));
-            tv[day - 1].setTextColor(Color.BLACK);
-            first = false;
-
-            Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
-            toolbar.setTitle("Schedule");
-            setHasOptionsMenu(true);
-            ((MainActivity)getActivity()).setSupportActionBar(toolbar);
+            linear1.addView(tv[i]);
         }
+        tv[day - 1].setBackground(getResources().getDrawable(R.drawable.cell_phone1));
+        tv[day - 1].setTextColor(Color.BLACK);
+        first = false;
+        pager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+
+                okras(tv);
+                day -= lastposition - position;
+                if (day < 1) {
+                    day = 7;
+                }
+                if (day > 7) {
+                    day = 1;
+                }
+                tv[day - 1].setBackground(getResources().getDrawable(R.drawable.cell_phone1));
+                tv[day - 1].setTextColor(Color.BLACK);
+                lastposition = pager.getCurrentItem();
+
+                sasha(String.valueOf(position));
+            }
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
+
+        Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
+        toolbar.setTitle("Schedule");
+        setHasOptionsMenu(true);
+        ((MainActivity)getActivity()).setSupportActionBar(toolbar);
         return v;
     }
 
@@ -224,12 +229,13 @@ public class ScheduleFragment extends Fragment {
 
     private class MyFragmentPagerAdapter extends FragmentPagerAdapter {
 
-        MyFragmentPagerAdapter(FragmentManager fm) {
+        public MyFragmentPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
         @Override
         public Fragment getItem(int position) {
+
             return pageFragments.get(position);
         }
 
@@ -237,6 +243,7 @@ public class ScheduleFragment extends Fragment {
         public int getCount() {
             return pageCount;
         }
+
     }
 
     void Download() {
