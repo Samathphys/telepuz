@@ -28,7 +28,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -45,9 +44,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import static com.example.sch.LoginActivity.connect;
 import static com.example.sch.LoginActivity.log;
-import static com.example.sch.LoginActivity.loge;
 import static java.lang.Thread.sleep;
 
 public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDateSetListener {
@@ -55,8 +52,6 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
     ArrayList<PeriodFragment.Subject> subjects;
     ArrayList<PeriodFragment.Day> days;
     ArrayList<PeriodFragment.Cell> cells;
-    boolean READY = false;
-    boolean shown = false;
     static int pageCount = 10001;
     boolean ready = false;
     boolean first = true;
@@ -118,6 +113,9 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
         Log.v("sasha", s);
     }
 
+    void setMarks() {
+
+    }
     void start() {
         cells = new ArrayList<>();
         days = new ArrayList<>();
@@ -130,21 +128,18 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        log("oncreateview");
-        if(v != null)
+        if (first) {
+            log("first");
             v = inflater.inflate(R.layout.fragment_schedule, container, false);
-        if(!READY) {
-            v = inflater.inflate(R.layout.fragment_schedule, container, false);
-            return v;
-        }
-        if(!shown)
-        log("oncreateview2");
-        return v;
-    }
+            while (true) {
+                try {
+                    sleep(10);
+                    if (ready)
+                        break;
+                } catch (InterruptedException ignore) {}
+            }
 
-    void show() {
-        log("show");
-        try {
+
             for (int i = 0; i < pageCount; i++) {
                 pageFragments.get(i).subjects = subjects;
             }
@@ -254,7 +249,6 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                     day = w;
                     sasha(String.valueOf(position));
                 }
-
                 @Override
                 public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 }
@@ -291,7 +285,6 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
             datePickerDialog.getDatePicker().setSpinnersShown(true);
             linear1 = v.findViewById(R.id.liner1);
             linear1.setWeightSum(1);
-            sasha("ffffffffffffff");
             for (int i = 0; i < 7; i++) {
                 tv[i] = new TextView(getContext());
                 tv[i].setId(i);
@@ -328,25 +321,11 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
             Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
             toolbar.setTitle("Schedule");
             setHasOptionsMenu(true);
-            ((MainActivity) getActivity()).setSupportActionBar(toolbar);
-            v.findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-            v.findViewById(R.id.layout_fragment_bp_list).setVisibility(View.VISIBLE);
-            log("end");
-        } catch (Exception e) {
-            loge("show: " + e.toString());
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
-                    toolbar.setTitle("Schedule");
-                    setHasOptionsMenu(true);
-                    ((MainActivity) getActivity()).setSupportActionBar(toolbar);
-                    v.findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
-                    v.findViewById(R.id.layout_fragment_bp_list).setVisibility(View.VISIBLE);
-                }
-            });
+            ((MainActivity)getActivity()).setSupportActionBar(toolbar);
         }
+        return v;
     }
+
     public void okras(TextView [] tv){
         for (int i = 0; i < 7; i++) {
             tv[i].setBackground(null);
@@ -559,6 +538,9 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                             call.unitid = object1.getInt("unitId");
                         cells.add(call);
                     }
+                    COOKIE = TheSingleton.getInstance().getCOOKIE();
+                    ROUTE = TheSingleton.getInstance().getROUTE();
+                    USER_ID = TheSingleton.getInstance().getUSER_ID();
 
                     String s1 = cells.get(0).date;
                     String s2 = cells.get(cells.size() - 1).date;
@@ -858,15 +840,9 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                     sasha(String.valueOf(days.size()));
                     sasha("set subjects: " + subjects.size() + " and days: " + days.size());
                     ((MainActivity) getActivity()).set(subjects, days, lins);
-                    READY = true;
-                    if(getActivity()!=null) {
-                        if(((MainActivity)getActivity()).getStackTop() instanceof ScheduleFragment)
-                            show();
-                    }
                     //---------------------------------------------------------------------------------------------------------------------------------
                 } catch (Exception e) {
                     sasha("second " + e);
-
                 }
             }
         }.start();
@@ -926,8 +902,6 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
 
         @Override
         public Fragment getItem(int position) {
-            if(position == 0)
-                return pageFragments.get(0);
             return pageFragments.get(position - 1);
         }
 

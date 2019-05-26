@@ -1,14 +1,12 @@
 package com.example.sch;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
-import android.support.design.internal.BottomNavigationItemView;
-import android.support.design.internal.BottomNavigationMenuView;
-import android.support.design.widget.BottomNavigationView;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -32,7 +30,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -62,14 +59,6 @@ public class MessagesFragment extends Fragment {
     LinearLayout container;
     ViewTreeObserver.OnScrollChangedListener scrollListener;
     MenuItem searchView = null;
-    boolean fromNotification = false;
-    int notifThreadId;
-    View savedView = null, view;
-    int search_mode = -1;
-    Person[] olist;
-    Context context;
-    boolean READY = false, shown = false;
-    View[] fitems;
 
     public MessagesFragment() {}
 
@@ -79,62 +68,13 @@ public class MessagesFragment extends Fragment {
         USER_ID = TheSingleton.getInstance().getUSER_ID();
         PERSON_ID = TheSingleton.getInstance().getPERSON_ID();
 
+
         new Thread() {
+            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
             @Override
             public void run() {
                 try {
                     download(null);
-                    JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/usr/olist", null, context));
-                    JSONObject obj;
-                    String fio, info = "";
-                    olist = new Person[array.length()];
-                    for (int i = 0; i < array.length(); i++) {
-                        obj = array.getJSONObject(i);
-                        olist[i] = new Person();
-                        if(obj.has("isExternal")) {
-                            if(obj.getBoolean("isExternal")) {
-                                olist[i].words = new String[0];
-                                continue;
-                            }
-                        }
-                        fio = obj.getString("fio");
-                        if(fio == null) {
-                            olist[i].words = new String[0];
-                            continue;
-                        }
-                        olist[i].prsId = obj.getInt("prsId");
-                        olist[i].fio = fio;
-                        if(obj.has("isStudent"))
-                            info = "Ученик ";
-                        else if (obj.has("isParent"))
-                            info = "Родитель ";
-                        else if (obj.has("isEmployee")) {
-                            if (obj.getBoolean("isEmployee"))
-                                info = "Учитель";
-                        } else {
-                            info = "";
-                        }
-                        if(obj.has("groupName")) {
-                            info += "(" + obj.getString("groupName") + ")";
-                            olist[i].words = new String[fio.split(" ").length + 1];
-                            for (int j = 0; j < fio.split(" ").length; j++) {
-                                olist[i].words[j] = fio.split(" ")[j];
-                            }
-                            olist[i].words[fio.split(" ").length] = obj.getString("groupName");
-                        } else
-                            olist[i].words = fio.split(" ");
-                        olist[i].info = info;
-                    }
-                    log("olist l: " + olist.length);
-                    READY = true;
-                    if(((MainActivity) getActivity()).getStackTop() instanceof MessagesFragment) {
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                show();
-                            }
-                        });
-                    }
                 } catch (Exception e) {
                     loge(e.toString());
                 }
@@ -145,13 +85,13 @@ public class MessagesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup contain,
                              Bundle savedInstanceState) {
-        if(getActivity().getApplicationContext() != null)
-            context = getActivity().getApplicationContext();
-        log("messages onCreateView");
-        if(savedView != null)
-            return savedView;
-        view = inflater.inflate(R.layout.messages, contain, false);
+
+        View view = inflater.inflate(R.layout.messages, contain, false);
         container = view.findViewById(R.id.container);
+        Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
+        toolbar.setTitle("Messages");
+        setHasOptionsMenu(true);
+        ((MainActivity)getActivity()).setSupportActionBar(toolbar);
         //((MainActivity)getActivity()).getSupportActionBar().setHomeButtonEnabled(true);
         return view;
     }
@@ -163,8 +103,6 @@ public class MessagesFragment extends Fragment {
         final SearchView searchView = (SearchView) myActionMenuItem.getActionView();
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             String query;
-            ArrayList<Person> result;
-            String error;
             @SuppressLint("HandlerLeak")
             final Handler h = new Handler() {
                 @Override
@@ -175,11 +113,10 @@ public class MessagesFragment extends Fragment {
                         getView().findViewById(R.id.loading_bar).setVisibility(View.INVISIBLE);
                         getView().findViewById(R.id.scroll).setVisibility(View.VISIBLE);
                         TextView tv = getView().findViewById(R.id.tv_error);
-                        tv.setText(error);
+                        tv.setText("Нет сообщений, удовлетворяющих условиям поиска.");
                         tv.setVisibility(View.VISIBLE);
                         return;
                     }
-
                     LayoutInflater inflater = getLayoutInflater();
                     View item;
                     TextView tv;
@@ -188,96 +125,6 @@ public class MessagesFragment extends Fragment {
                     Spannable spannable;
                     Spanned mess;
                     String s;
-                    if(search_mode == 1) {
-                        log("result: " + result.size());
-                        s_count = -1;
-                        count = -1;
-                        Person person;
-                        for (int i = 0; i < (result.size() > 100? 100: result.size()); i++) {
-                            person = result.get(i);
-                            item = inflater.inflate(R.layout.person_item, container, false);
-                            tv = item.findViewById(R.id.tv_fio);
-                            index = person.fio.toLowerCase().indexOf(query.toLowerCase());
-
-                            int start, end;
-                            if(index != -1) {
-                                if (index > 30)
-                                    start = index - 30;
-                                else
-                                    start = 0;
-                                if (person.fio.length() > index + query.length() + 30)
-                                    end = index + query.length() + 30;
-                                else
-                                    end = person.fio.length() - 1;
-                                s = (start == 0 ? "" : "...") + person.fio.subSequence(start, end + 1).toString() + (end == person.fio.length() - 1 ? "" : "...");
-                                spannable = new SpannableString(s);
-                                spannable.setSpan(new BackgroundColorSpan(getResources().getColor(R.color.colorPrimaryDark)), s.toLowerCase().indexOf(query.toLowerCase()), s.toLowerCase().indexOf(query.toLowerCase()) + query.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                                tv.setText(spannable);
-                                tv = item.findViewById(R.id.tv_info);
-                                tv.setText(person.info);
-                            } else {
-                                tv.setText(person.fio);
-                                index = person.info.toLowerCase().indexOf(query.toLowerCase());
-                                if (index > 30)
-                                    start = index - 30;
-                                else
-                                    start = 0;
-                                if (person.info.length() > index + query.length() + 30)
-                                    end = index + query.length() + 30;
-                                else
-                                    end = person.info.length() - 1;
-                                s = (start == 0 ? "" : "...") + person.info.subSequence(start, end + 1).toString() + (end == person.info.length() - 1 ? "" : "...");
-                                spannable = new SpannableString(s);
-                                spannable.setSpan(new BackgroundColorSpan(getResources().getColor(R.color.colorPrimaryDark)), s.toLowerCase().indexOf(query.toLowerCase()), s.toLowerCase().indexOf(query.toLowerCase()) + query.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                                tv = item.findViewById(R.id.tv_info);
-                                tv.setText(spannable);
-                            }
-                            //tv.setText(person.fio);
-                            final int prsId = person.prsId;
-                            final String fio = person.fio;
-                            item.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                     new Thread() {
-                                         @Override
-                                         public void run() {
-                                             try {
-                                                 final JSONObject threads = new JSONObject(connect("https://app.eschool.center/ec-server/chat/privateThreads", null, context));
-                                                 if(threads.has(prsId + "")) {
-                                                     log("has");
-                                                     getActivity().runOnUiThread(new Runnable() {
-                                                         @Override
-                                                         public void run() {
-                                                             try {
-                                                                 loadChat(threads.getInt(prsId + ""), fio, -1);
-                                                             } catch (JSONException e) {loge(e.toString());}
-                                                         }
-                                                     });
-                                                 } else {
-                                                     log("hasn't prsId " + prsId);
-                                                     final int threadId = Integer.parseInt(connect("https://app.eschool.center/ec-server/chat/saveThread",
-                                                             "{\"threadId\":null,\"senderId\":null,\"imageId\":null,\"subject\":null,\"isAllowReplay\":2,\"isGroup\":false,\"interlocutor\":" + prsId + "}",
-                                                             context, true));
-                                                     getActivity().runOnUiThread(new Runnable() {
-                                                         @Override
-                                                         public void run() {
-                                                             loadChat(threadId, fio, -1);
-                                                         }
-                                                     });
-                                                 }
-                                             } catch (Exception e) {loge(e.toString());}
-                                         }
-                                     }.start();
-                                }
-                            });
-
-                            container.addView(item, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            container.addView(inflater.inflate(R.layout.divider, container, false));
-                        }
-                        getView().findViewById(R.id.loading_bar).setVisibility(View.INVISIBLE);
-                        getView().findViewById(R.id.scroll).setVisibility(View.VISIBLE);
-                        return;
-                    }
                     for (int i = 0; i < s_senders.size(); i++) {
                         item = inflater.inflate(R.layout.thread_item, container, false);
                         tv = item.findViewById(R.id.tv_sender);
@@ -297,6 +144,7 @@ public class MessagesFragment extends Fragment {
                         else
                             end = mess.toString().length()-1;
                         s = (start == 0?"":"...") + mess.subSequence(start, end+1).toString() + (end == mess.toString().length()-1?"":"...");
+                        loge("sub: " + s);
                         spannable = new SpannableString(s);
                         spannable.setSpan(new BackgroundColorSpan(getResources().getColor(R.color.colorPrimaryDark)), s.toLowerCase().indexOf(query.toLowerCase()), s.toLowerCase().indexOf(query.toLowerCase()) + query.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                         tv.setText(spannable);
@@ -311,7 +159,15 @@ public class MessagesFragment extends Fragment {
                         item.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                loadChat(s_threadIds.get(j), s_senders.get(j), s_msgIds.get(j));
+                                FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                                ChatFragment fragment = new ChatFragment();
+                                fragment.threadId = s_threadIds.get(j);
+                                fragment.threadName = s_senders.get(j);
+                                fragment.searchMsgId = s_msgIds.get(j);
+                                ((MainActivity)getActivity()).set_visible(false);
+                                transaction.replace(R.id.chat_container, fragment);
+                                transaction.addToBackStack(null);
+                                transaction.commit();
                             }
                         });
                         container.addView(item, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -332,8 +188,6 @@ public class MessagesFragment extends Fragment {
                     return false;
                 if(q.charAt(q.length()-1) == ' ')
                     q = q.substring(0, q.length()-1);
-                if(q.charAt(0) == ' ')
-                    q = q.substring(1, q.length()-1);
                 final String query = q;
                 getView().findViewById(R.id.tv_error).setVisibility(View.INVISIBLE);
                 log( "query: '" + query + "'");
@@ -343,86 +197,59 @@ public class MessagesFragment extends Fragment {
                 getView().findViewById(R.id.loading_bar).setVisibility(View.VISIBLE);
                 getView().findViewById(R.id.scroll).setVisibility(View.INVISIBLE);
 
-                log("search mode " + search_mode);
-                if(search_mode == 0) {
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                s_senders = new ArrayList<>();
-                                s_messages = new ArrayList<>();
-                                s_threadIds = new ArrayList<>();
-                                s_time = new ArrayList<>();
-                                s_msgIds = new ArrayList<>();
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            s_senders = new ArrayList<>();
+                            s_messages = new ArrayList<>();
+                            s_threadIds = new ArrayList<>();
+                            s_time = new ArrayList<>();
+                            s_msgIds = new ArrayList<>();
 
-                                String result = connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=1&rowsCount=15&text=" + query, null, context);
-                                log("search result: " + result);
-                                JSONArray array = new JSONArray(result), a, b;
-                                if (array.length() == 0) {
-                                    error = "Нет сообщений, удовлетворяющих условиям поиска";
-                                    h.sendEmptyMessage(123);
-                                    return;
-                                }
-                                JSONObject obj, c;
-                                String A, B, C;
-                                for (int i = 0; i < array.length(); i++) {
-                                    obj = array.getJSONObject(i);
-                                    a = obj.getJSONArray("filterNumbers");
-                                    for (int j = 0; j < a.length(); j++) {
-                                        result = connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
-                                                "&threadId=" + obj.getInt("threadId") + "&msgStart=" + (a.optInt(j) + 1), null, context);
-
-                                        b = new JSONArray(result);
-                                        c = b.getJSONObject(0);
-                                        obj = array.getJSONObject(i);
-                                        A = obj.getString("senderFio").split(" ")[0];
-                                        B = obj.getString("senderFio").split(" ")[1];
-                                        if (obj.getString("senderFio").split(" ").length <= 2) {
-                                            loge("fio strange:");
-                                            loge(obj.toString());
-                                            C = "a";
-                                        } else
-                                            C = obj.getString("senderFio").split(" ")[2];
-                                        s_senders.add(A + " " + B.charAt(0) + ". " + C.charAt(0) + ".");
-                                        s_messages.add(c.getString("msg"));
-                                        s_threadIds.add(c.getInt("threadId"));
-                                        s_msgIds.add(a.optInt(j));
-                                        Date date = new Date(c.getLong("createDate"));
-                                        s_time.add(String.format(Locale.UK, "%02d:%02d", date.getHours(), date.getMinutes()));
-                                    }
-                                }
-                                if (array.length() < 15)
-                                    s_count = -1;
-                                h.sendEmptyMessage(0);
-                            } catch (Exception e) {
-                                loge(e.toString());
-                            }
-                        }
-                    }.start();
-                } else if(search_mode == 1) {
-                    s_count = -1;
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            result = new ArrayList<>();
-                            for (Person person: olist) {
-                                if(person.words.length == 0)
-                                    continue;
-                                for (String s: person.words) {
-                                    if(s.toLowerCase().contains(query.toLowerCase())) {
-                                        result.add(person);
-                                        break;
-                                    }
-                                }
-                            }
-                            if (result.size() == 0) {
-                                error = "Нет адресатов, удовлетворяющих условиям поиска";
+                            String result = connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=1&rowsCount=15&text=" + query, null);
+                            log("search result: " + result);
+                            JSONArray array = new JSONArray(result), a, b;
+                            if(array.length() == 0) {
                                 h.sendEmptyMessage(123);
-                            } else
-                                h.sendEmptyMessage(0);
+                                return;
+                            }
+                            JSONObject obj, c;
+                            String A, B, C;
+                            for (int i = 0; i < array.length(); i++) {
+                                obj = array.getJSONObject(i);
+                                a = obj.getJSONArray("filterNumbers");
+                                for (int j = 0; j < a.length(); j++) {
+                                    result = connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
+                                            "&threadId=" + obj.getInt("threadId") +"&msgStart=" + (a.optInt(j)+1), null);
+
+                                    b = new JSONArray(result);
+                                    c = b.getJSONObject(0);
+                                    obj = array.getJSONObject(i);
+                                    A = obj.getString("senderFio").split(" ")[0];
+                                    B = obj.getString("senderFio").split(" ")[1];
+                                    if (obj.getString("senderFio").split(" ").length <= 2) {
+                                        loge("fio strange:");
+                                        loge(obj.toString());
+                                        C = "a";
+                                    } else
+                                        C = obj.getString("senderFio").split(" ")[2];
+                                    s_senders.add(A + " " + B.charAt(0) + ". " + C.charAt(0) + ".");
+                                    s_messages.add(c.getString("msg"));
+                                    s_threadIds.add(c.getInt("threadId"));
+                                    s_msgIds.add(a.optInt(j));
+                                    Date date = new Date(c.getLong("createDate"));
+                                    s_time.add(String.format(Locale.UK, "%02d:%02d", date.getHours(), date.getMinutes()));
+                                }
+                            }
+                            if(array.length() < 15)
+                                s_count = -1;
+                            h.sendEmptyMessage(0);
+                        } catch (Exception e) {
+                            loge(e.toString());
                         }
-                    }.start();
-                }
+                    }
+                }.start();
                 //myActionMenuItem.collapseActionView();
                 return false;
             }
@@ -430,215 +257,125 @@ public class MessagesFragment extends Fragment {
             @Override
             public boolean onQueryTextChange(String s) {
                 log("query changed: " + s);
-                String q = s;
-                if(s.replaceAll(" ", "").equals(""))
-                    return false;
-                if(q.charAt(q.length()-1) == ' ')
-                    q = q.substring(0, q.length()-1);
-                if(q.charAt(0) == ' ')
-                    q = q.substring(1, q.length()-1);
-                query = q;
-                if (search_mode == 1) {
-                    s_count = -1;
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            result = new ArrayList<>();
-                            for (Person person : olist) {
-                                if (person.words.length == 0)
-                                    continue;
-                                for (String s : person.words) {
-                                    if (s.toLowerCase().contains(query.toLowerCase())) {
-                                        result.add(person);
-                                        break;
-                                    }
-                                }
-                            }
-                            if (result.size() == 0) {
-                                error = "Нет адресатов, удовлетворяющих условиям поиска";
-                                h.sendEmptyMessage(123);
-                            } else
-                                h.sendEmptyMessage(0);
-                        }
-                    }.start();
-                }
-                /*if(s.trim().equals("")) {
+                if(s.trim().equals("")) {
 //                    h.sendEmptyMessage(2);
                     onViewCreated(getView(), null);
-                }*/
+                }
                 return false;
-            }
-        });
-        myActionMenuItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
-                return true;
-            }
-
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
-                log("collapsing");
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("collapsing", true);
-                //onViewCreated(getView(), bundle);
-                count = 25;
-                s_count = 0;
-                show();
-                return true;
             }
         });
         super.onCreateOptionsMenu(menu, inflate);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.refresh:
-                refresh();
-                break;
-            case R.id.new_dialog:
-                search_mode = 1;
-                searchView.expandActionView();
-                break;
-            case R.id.action_search:
-                search_mode = 0;
-                break;
+    void newMessage(String text, long time, int sender_id, int thread_id) {
+        log("new message in MessagesFragment");
+        LinearLayout container = getView().findViewById(R.id.container);
+        View thread = container.findViewWithTag(thread_id);
+        if(thread == null) {
+            loge("this thread was not found");
+            return;
         }
-        log("options item selected");
-        return super.onOptionsItemSelected(item);
+        TextView tv = thread.findViewById(R.id.tv_new);
+        if(tv.getVisibility() == View.INVISIBLE) {
+            tv.setVisibility(View.VISIBLE);
+            tv.setText("1");
+        } else {
+            tv.setText(Integer.parseInt(tv.getText().toString()) + 1 + "");
+        }
     }
 
     boolean uploading = false;
 
     @Override
     public void onViewCreated(@Nonnull final View view, @Nullable final Bundle savedInstanceState) {
-        if (READY && !shown)
-            show();
-        if(savedView != null)
-            if(savedInstanceState == null)
-                return;
-            else if(!savedInstanceState.getBoolean("collapsing"))
-                return;
         log("onViewCreated");
-        /*int I = 0;
         while(true) {
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException ignore) {}
-            if(I % 20 == 0)
-                log(".");
-            I++;
+            log(".");
             if(users != null)
                 break;
-            if(I==200)
-                start();
-        }*/
-        if(view == null || f_senders == null) {
+        }
+        if(view == null) {
             loge("null in MessagesFragment");
             return;
         }
-
-        if(fromNotification) {
-            log("fromNotif");
-            loadChat(notifThreadId, f_senders.get(f_threadIds.indexOf(notifThreadId)), -1);
-        }
-    }
-
-    void show() {
-        final LinearLayout container1 = view.findViewById(R.id.container);
+        LinearLayout container1 = view.findViewById(R.id.container);
         if(container1 == null) {
-            loge("container null in MessagesFragment");
+            loge("null in MessagesFragment");
             return;
         }
         container1.removeAllViews();
-        TextView tv = view.findViewById(R.id.tv_error);
+
+        View item;
+        TextView tv;
+        ImageView img;
+        LayoutInflater inflater = getLayoutInflater();
+
+        tv = view.findViewById(R.id.tv_error);
         tv.setText("");
         tv.setVisibility(View.INVISIBLE);
-
-        final ScrollView scroll = view.findViewById(R.id.scroll);
-//        new Thread() {
-//            @Override
-//            public void run() {
-                View item;
-//                TextView tv;
-                ImageView img;
-                LayoutInflater inflater = getLayoutInflater();
-
-                fitems = new View[f_senders.size()];
-
-                int c = 0;
-                for (int i = 0; i < f_senders.size(); i++) {
-                    item = inflater.inflate(R.layout.thread_item, container1, false);
-                    tv = item.findViewById(R.id.tv_sender);
-                    tv.setText(f_senders.get(i));
-                    tv = item.findViewById(R.id.tv_topic);
-                    tv.setText(Html.fromHtml(f_topics.get(i)));
-                    tv = item.findViewById(R.id.tv_users);
-                    img = item.findViewById(R.id.img);
-                    if (f_users.get(i) == 0 || f_users.get(i) == 2) {
-                        img.setImageDrawable(getResources().getDrawable(R.drawable.dialog));
-                        tv.setText("");
-                    } else if (f_users.get(i) == 1) {
-                        img.setImageDrawable(getResources().getDrawable(R.drawable.monolog));
-                        tv.setText("");
-                    } else {
-                        img.setImageDrawable(getResources().getDrawable(R.drawable.group));
-                        tv.setText(f_users.get(i) + "");
-                    }
-                    final int j = i;
-                    item.setTag(f_threadIds.get(j));
-                    tv = item.findViewById(R.id.tv_new);
-                    if (f_newCounts.get(i) > 0) {
-                        tv.setVisibility(View.VISIBLE);
-                        tv.setText(f_newCounts.get(i) + "");
-                        loge("new msg: " + f_senders.get(i));
-                    }
-                    c += f_newCounts.get(i);
-                    //item.setTag(R.id.TAG_THREAD, f_threadIds.get(j));
-                    item.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            loadChat(f_threadIds.get(j), f_senders.get(j), -1);
-                        }
-                    });
-                    fitems[i] = item;
+        for (int i = 0; i < f_senders.size(); i++) {
+            item = inflater.inflate(R.layout.thread_item, container1, false);
+            tv = item.findViewById(R.id.tv_sender);
+            tv.setText(f_senders.get(i));
+            tv = item.findViewById(R.id.tv_topic);
+            tv.setText(Html.fromHtml(f_topics.get(i)));
+            tv = item.findViewById(R.id.tv_users);
+            img = item.findViewById(R.id.img);
+            if(f_users.get(i) == 0 || f_users.get(i) == 2) {
+                img.setImageDrawable(getResources().getDrawable(R.drawable.dialog));
+                tv.setText("");
+            } else if(f_users.get(i) == 1) {
+                img.setImageDrawable(getResources().getDrawable(R.drawable.monolog));
+                tv.setText("");
+            } else {
+                img.setImageDrawable(getResources().getDrawable(R.drawable.group));
+                tv.setText(f_users.get(i) + "");
+            }
+            final int j = i;
+            item.setTag(f_threadIds.get(j));
+            tv = item.findViewById(R.id.tv_new);
+            if(f_newCounts.get(i) > 0) {
+                tv.setVisibility(View.VISIBLE);
+                tv.setText(f_newCounts.get(i) + "");
+            }
+            //item.setTag(R.id.TAG_THREAD, f_threadIds.get(j));
+            item.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    ChatFragment fragment = new ChatFragment();
+                    fragment.threadId = f_threadIds.get(j);
+                    fragment.threadName = f_senders.get(j);
+                    ((MainActivity)getActivity()).set_visible(false);
+                    transaction.replace(R.id.chat_container, fragment);
+                    transaction.addToBackStack(null);
+                    transaction.commit();
                 }
-                final int C = c;
-//                getActivity().runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-                        for (View fitem : fitems) {
-                            container1.addView(fitem, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            container1.addView(getLayoutInflater().inflate(R.layout.divider, container1, false));
-                        }
-                        BottomNavigationView bottomnav = getActivity().findViewById(R.id.bottomnav);
-                        BottomNavigationMenuView bottomNavigationMenuView =
-                                (BottomNavigationMenuView) bottomnav.getChildAt(0);
-                        final BottomNavigationItemView itemView = (BottomNavigationItemView)  bottomNavigationMenuView.getChildAt(2);
-                        log("c: " + C);
-                        tv = itemView.findViewById(R.id.tv_badge);
-                        if(C > 0) {
-                            tv.setVisibility(View.VISIBLE);
-                            tv.setText(C + "");
-                        } else
-                            tv.setVisibility(View.INVISIBLE);
-
-                        scroll.scrollTo(0, 0);
-                        final SwipeRefreshLayout refreshL = view.findViewById(R.id.l_refresh);
-                        refreshL.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                            @Override
-                            public void onRefresh() {
-                                log("refreshing");
-                                refresh();
-                            }
-                        });
-                        savedView = view;
-//                    }
-//                });
-//            }
-//        }.start();
+            });
+            container1.addView(item, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            container1.addView(inflater.inflate(R.layout.divider, container1, false));
+        }
+        final ScrollView scroll = view.findViewById(R.id.scroll);
+        scroll.scrollTo(0, 0);
 
         if(first_time) {
+            final SwipeRefreshLayout refreshL = view.findViewById(R.id.l_refresh);
+            refreshL.setOnRefreshListener(
+                    new SwipeRefreshLayout.OnRefreshListener() {
+                        @Override
+                        public void onRefresh() {
+                            log("refreshing");
+                            refresh();
+                        }
+                    }
+            );
+            @SuppressLint("HandlerLeak") final Handler h = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    scroll.getViewTreeObserver()
+                            .addOnScrollChangedListener(scrollListener);
+                }
+            };
             new Thread() {
                 @Override
                 public void run() {
@@ -656,7 +393,7 @@ public class MessagesFragment extends Fragment {
                                 @SuppressLint("HandlerLeak") final Handler h = new Handler() {
                                     @Override
                                     public void handleMessage(Message msg) {
-                                        if (msg.what == 0) {
+                                        if(msg.what == 0) {
                                             LinearLayout container = view.findViewById(R.id.container);
 
                                             View item;
@@ -687,13 +424,23 @@ public class MessagesFragment extends Fragment {
                                                 item.setOnClickListener(new View.OnClickListener() {
                                                     @Override
                                                     public void onClick(View v) {
+                                                        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                                                        ChatFragment fragment = new ChatFragment();
+                                                        log("count: " + f_count);
+                                                        log("senders l: " + l);
+                                                        log("j: " + j);
+                                                        log("size: " + f_threadIds.size());
                                                         if (f_count != -1) {
-                                                            loadChat(f_threadIds.get(f_count + 25 - (l - j)),
-                                                                    f_senders.get(f_count + 25 - (l - j)), -1);
+                                                            fragment.threadId = f_threadIds.get(f_count + 25 - (l - j));
+                                                            fragment.threadName = f_senders.get(f_count + 25 - (l - j));
                                                         } else {
-                                                            loadChat(f_threadIds.get(f_threadIds.size() - (l - j)),
-                                                                    f_senders.get(f_threadIds.size() - (l - j)), -1);
+                                                            fragment.threadId = f_threadIds.get(f_threadIds.size() - (l - j));
+                                                            fragment.threadName = f_senders.get(f_threadIds.size() - (l - j));
                                                         }
+                                                        ((MainActivity) getActivity()).set_visible(false);
+                                                        transaction.replace(R.id.chat_container, fragment);
+                                                        transaction.addToBackStack(null);
+                                                        transaction.commit();
                                                     }
                                                 });
                                                 container.addView(item, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -702,7 +449,8 @@ public class MessagesFragment extends Fragment {
                                             if (count != -1)
                                                 count += senders.length;
                                             uploading = false;
-                                        } else if (msg.what == 1) {
+                                        }
+                                        else if(msg.what == 1){
                                             LayoutInflater inflater = getLayoutInflater();
                                             View item;
                                             TextView tv;
@@ -721,15 +469,15 @@ public class MessagesFragment extends Fragment {
                                                 index = mess.toString().toLowerCase().indexOf(s_query.toLowerCase());
                                                 log("index: " + index);
                                                 int start, end;
-                                                if (index > 30)
-                                                    start = index - 30;
+                                                if(index > 30)
+                                                    start = index-30;
                                                 else
                                                     start = 0;
-                                                if (mess.toString().length() > index + s_query.length() + 30)
+                                                if(mess.toString().length() > index + s_query.length() + 30)
                                                     end = index + s_query.length() + 30;
                                                 else
-                                                    end = mess.toString().length() - 1;
-                                                s = (start == 0 ? "" : "...") + mess.subSequence(start, end).toString() + (end == mess.toString().length() - 1 ? "" : "...");
+                                                    end = mess.toString().length()-1;
+                                                s = (start == 0?"":"...") + mess.subSequence(start, end).toString() + (end == mess.toString().length()-1?"":"...");
                                                 spannable = new SpannableString(s);
                                                 spannable.setSpan(new BackgroundColorSpan(getResources().getColor(R.color.colorPrimaryDark)), s.toLowerCase().indexOf(s_query.toLowerCase()), s.toLowerCase().indexOf(s_query.toLowerCase()) + s_query.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                                                 tv.setText(spannable);
@@ -740,13 +488,21 @@ public class MessagesFragment extends Fragment {
                                                 item.setOnClickListener(new View.OnClickListener() {
                                                     @Override
                                                     public void onClick(View v) {
-                                                        loadChat(s_threadIds.get(j), s_senders.get(j), s_msgIds.get(j));
+                                                        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                                                        ChatFragment fragment = new ChatFragment();
+                                                        fragment.threadId = s_threadIds.get(j);
+                                                        fragment.threadName = s_senders.get(j);
+                                                        fragment.searchMsgId = s_msgIds.get(j);
+                                                        ((MainActivity)getActivity()).set_visible(false);
+                                                        transaction.replace(R.id.chat_container, fragment);
+                                                        transaction.addToBackStack(null);
+                                                        transaction.commit();
                                                     }
                                                 });
                                                 container.addView(item, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                                                 container.addView(inflater.inflate(R.layout.divider, container, false));
                                             }
-                                            if (msg.arg1 == 0) {
+                                            if(msg.arg1==0) {
                                                 s_count = s_senders.size();
                                             } else
                                                 s_count = -1;
@@ -758,9 +514,9 @@ public class MessagesFragment extends Fragment {
                                     public void run() {
                                         try {
                                             if (s_senders == null) {
-                                                if (count == -1)
+                                                if(count == -1)
                                                     return;
-                                                JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=" + (count + 1) + "&rowsCount=25", null, context));
+                                                JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=" + (count + 1) + "&rowsCount=25", null));
                                                 senders = new String[array.length()];
                                                 topics = new String[array.length()];
                                                 users = new int[array.length()];
@@ -805,11 +561,12 @@ public class MessagesFragment extends Fragment {
                                                 }
                                                 log("first thread: " + senders[0]);
                                                 h.sendEmptyMessage(0);
-                                            } else if (s_count != -1 && search_mode != 1) {
-                                                String result = connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=" + s_count + "&rowsCount=25&text=" + s_query, null, context);
+                                            } else if(s_count != -1) {
+
+                                                String result = connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=" + s_count + "&rowsCount=25&text=" + s_query, null);
                                                 log("search result: " + result);
                                                 JSONArray array = new JSONArray(result), a, b;
-                                                if (array.length() == 0) {
+                                                if(array.length() == 0) {
                                                     h.sendEmptyMessage(2);
                                                     return;
                                                 }
@@ -819,7 +576,7 @@ public class MessagesFragment extends Fragment {
                                                     a = obj.getJSONArray("filterNumbers");
                                                     for (int j = 0; j < a.length(); j++) {
                                                         result = connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
-                                                                "&threadId=" + obj.getInt("threadId") + "&msgStart=" + (/*obj.getInt("msgNum")*/a.optInt(j) + 1), null, context);
+                                                                "&threadId=" + obj.getInt("threadId") +"&msgStart=" + (/*obj.getInt("msgNum")*/a.optInt(j)+1), null);
 
                                                         b = new JSONArray(result);
                                                         c = b.getJSONObject(0);
@@ -831,7 +588,7 @@ public class MessagesFragment extends Fragment {
                                                         s_time.add(String.format(Locale.UK, "%02d:%02d", date.getHours(), date.getMinutes()));
                                                     }
                                                 }
-                                                h.sendMessage(h.obtainMessage(1, array.length() == 25 ? 0 : 1, 0));
+                                                h.sendMessage(h.obtainMessage(1, array.length()==25?0:1, 0));
                                             }
                                         } catch (Exception e) {
                                             loge(e.toString());
@@ -841,77 +598,18 @@ public class MessagesFragment extends Fragment {
                             }
                         }
                     };
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            scroll.getViewTreeObserver()
-                                    .addOnScrollChangedListener(scrollListener);
-                        }
-                    });
+                    h.sendEmptyMessage(0);
                 }
             }.start();
-            Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
-            toolbar.setTitle("Messages");
-            toolbar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    log("click on toolbar");
-                    if(!(((MainActivity) getActivity()).getStackTop() instanceof MessagesFragment))
-                        return;
-                    final ScrollView scroll = getView().findViewById(R.id.scroll);
-                    scroll.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            scroll.scrollTo(0, 0);
-                        }
-                    });
-                }
-            });
-            setHasOptionsMenu(true);
-            ((MainActivity)getActivity()).setSupportActionBar(toolbar);
+
             first_time = false;
         }
-
-        view.findViewById(R.id.loading_bar).setVisibility(View.INVISIBLE);
-        view.findViewById(R.id.l_refresh).setVisibility(View.VISIBLE);
-        shown = true;
-    }
-
-    void newMessage(String text, long time, int sender_id, int thread_id) {
-        log("new message in MessagesFragment");
-        LinearLayout container = getView().findViewById(R.id.container);
-        View thread = container.findViewWithTag(thread_id);
-        if(thread == null) {
-            loge("this thread was not found");
-            return;
-        }
-        TextView tv = thread.findViewById(R.id.tv_new);
-        if(tv.getVisibility() == View.INVISIBLE) {
-            tv.setVisibility(View.VISIBLE);
-            tv.setText("1");
-        } else {
-            tv.setText(Integer.parseInt(tv.getText().toString()) + 1 + "");
-        }
-        tv = thread.findViewById(R.id.tv_topic);
-        tv.setText(text);
-        BottomNavigationView bottomnav = getActivity().findViewById(R.id.bottomnav);
-        BottomNavigationMenuView bottomNavigationMenuView =
-                (BottomNavigationMenuView) bottomnav.getChildAt(0);
-        final BottomNavigationItemView itemView = (BottomNavigationItemView)  bottomNavigationMenuView.getChildAt(2);
-        tv = itemView.findViewById(R.id.tv_badge);
-        if(tv.getVisibility() == View.INVISIBLE) {
-            tv.setVisibility(View.VISIBLE);
-            tv.setText("1");
-        } else
-            tv.setText(Integer.parseInt(tv.getText().toString()) + 1 + "");
-        ScrollView scroll = getView().findViewById(R.id.scroll);
-        scroll.scrollTo(0, container.getBottom());
     }
 
     void download(Handler handler) throws Exception {
         JSONArray array = new JSONArray(
                 connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=1&rowsCount=25",
-                        null, context));
+                        null));
         senders = new String[array.length()];
         topics = new String[array.length()];
         users = new int[array.length()];
@@ -991,17 +689,6 @@ public class MessagesFragment extends Fragment {
                         }
                         final ScrollView scroll = getView().findViewById(R.id.scroll);
                         scroll.scrollTo(0, 0);
-                        BottomNavigationView bottomnav = getActivity().findViewById(R.id.bottomnav);
-                        BottomNavigationMenuView bottomNavigationMenuView =
-                                (BottomNavigationMenuView) bottomnav.getChildAt(0);
-                        final BottomNavigationItemView itemView = (BottomNavigationItemView)  bottomNavigationMenuView.getChildAt(2);
-                        tv = itemView.findViewById(R.id.tv_badge);
-                        if(msg.what == 0) {
-                            tv.setVisibility(View.INVISIBLE);
-                        } else {
-                            tv.setVisibility(View.VISIBLE);
-                            tv.setText(msg.what + "");
-                        }
                         ((SwipeRefreshLayout) getView().findViewById(R.id.l_refresh)).setRefreshing(false);
                     }
                 };
@@ -1011,7 +698,6 @@ public class MessagesFragment extends Fragment {
                         View item;
                         TextView tv;
                         ImageView img;
-                        int c = 0;
                         for (int i = 0; i < f_senders.size(); i++) {
                             item = getLayoutInflater().inflate(R.layout.thread_item, container1, false);
                             tv = item.findViewById(R.id.tv_sender);
@@ -1035,19 +721,25 @@ public class MessagesFragment extends Fragment {
                                 tv.setVisibility(View.VISIBLE);
                                 tv.setText("" + f_newCounts.get(i));
                             }
-                            c+=f_newCounts.get(i);
                             final int j = i;
                             item.setTag(f_threadIds.get(j));
                             //item.setTag(R.id.TAG_THREAD, f_threadIds.get(j));
                             item.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    loadChat(f_threadIds.get(j), f_senders.get(j), -1);
+                                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                                    ChatFragment fragment = new ChatFragment();
+                                    fragment.threadId = f_threadIds.get(j);
+                                    fragment.threadName = f_senders.get(j);
+                                    ((MainActivity)getActivity()).set_visible(false);
+                                    transaction.replace(R.id.chat_container, fragment);
+                                    transaction.addToBackStack(null);
+                                    transaction.commit();
                                 }
                             });
                             items[i] = item;
                         }
-                        h.sendEmptyMessage(c);
+                        h.sendEmptyMessage(0);
                     }
                 }.start();
 
@@ -1063,41 +755,4 @@ public class MessagesFragment extends Fragment {
             }
         }.start();
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-         //refresh();
-    }
-
-    void loadChat(int threadId, String threadName, int searchId) {
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        ChatFragment fragment = new ChatFragment();
-        fragment.threadId = threadId;//f_threadIds.get(j);
-        fragment.threadName = threadName;//f_senders.get(j);
-        if(searchId != -1)
-            fragment.searchMsgId = searchId;
-        ((MainActivity)getActivity()).set_visible(false);
-        transaction.replace(R.id.chat_container, fragment);
-        transaction.addToBackStack(null);
-        transaction.commit();
-    }
-
-    public View getView() {
-        View view = super.getView();
-        if(view == null) {
-            loge("null view!!");
-            return new View(getActivity().getApplicationContext());
-        } else
-            return view;
-    }
-
-    class Person {
-        String fio;
-        String info;
-        String[] words;
-        int prsId;
-        Person() {}
-    }
 }
-

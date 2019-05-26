@@ -25,8 +25,6 @@ import android.widget.TextView;
 import java.text.DateFormatSymbols;
 import java.util.ArrayList;
 
-import static com.example.sch.LoginActivity.loge;
-
 public class SubjectFragment extends Fragment {
 
     private static DateFormatSymbols myDateFormatSymbols = new DateFormatSymbols() {
@@ -67,10 +65,6 @@ public class SubjectFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_subject, container, false);
         LinearLayout linearLayout = v.findViewById(R.id.ll);
         linearLayout.setBaselineAligned(false);
-        if(subname == null) {
-            loge("subname null!");
-            subname = "strange subname";
-        }
         if (subname != " " && subname != "") {
             TextView tv1 = new TextView(getActivity().getApplicationContext());
             tv1.setLayoutParams(new LinearLayout.LayoutParams(

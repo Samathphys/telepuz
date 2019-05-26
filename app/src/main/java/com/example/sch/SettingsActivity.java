@@ -11,13 +11,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.support.v7.widget.Toolbar;
-import android.widget.Switch;
 
 import static com.example.sch.LoginActivity.connect;
-import static com.example.sch.LoginActivity.log;
 import static com.example.sch.LoginActivity.loge;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -66,22 +63,10 @@ public class SettingsActivity extends AppCompatActivity {
                         try {
                             connect("https://still-cove-90434.herokuapp.com/new_event",
                                     "firebase_id=" + TheSingleton.getInstance().getFb_id() + "&event=feedback" +
-                                            "&msg=" + text + "&time=" + System.nanoTime(), getApplicationContext());
+                                            "&msg=" + text + "&time=" + System.nanoTime());
                         } catch (Exception e) {loge(e.toString());}
                     }
                 }.start();
-                et.setText("");
-                startActivity(new Intent(getApplicationContext(), ThanksActivity.class));
-            }
-        });
-
-        Switch auto = findViewById(R.id.switch_auto);
-        auto.setChecked(getSharedPreferences("pref", 0).getBoolean("auto", true));
-        auto.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                log("switch1: " + isChecked);
-                getSharedPreferences("pref", 0).edit().putBoolean("auto", isChecked).apply();
             }
         });
 
@@ -109,7 +94,7 @@ public class SettingsActivity extends AppCompatActivity {
                 public void run() {
                     try {
                         connect("https://still-cove-90434.herokuapp.com/logout",
-                                "firebase_id=" + TheSingleton.getInstance().getFb_id(), getApplicationContext());
+                                "firebase_id=" + TheSingleton.getInstance().getFb_id());
                     } catch (Exception e) {
                         loge("logout: " + e.toString());
                     }

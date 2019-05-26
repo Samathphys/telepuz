@@ -1,14 +1,15 @@
 package com.example.sch;
 
+import android.content.BroadcastReceiver;
+
 import java.util.ArrayList;
 
 class TheSingleton {
     private static final TheSingleton ourInstance = new TheSingleton();
-    private String COOKIE, ROUTE, fb_id, login;
+    private String COOKIE, ROUTE, fb_id;
     private int USER_ID, PERSON_ID;
     private ArrayList<PeriodFragment.Subject> subjects;
     private ArrayList<PeriodFragment.Day> days;
-    int notification_id = 0;
 
     static TheSingleton getInstance() {
         return ourInstance;
@@ -56,27 +57,19 @@ class TheSingleton {
         this.fb_id = fb_id;
     }
 
-    ArrayList<PeriodFragment.Subject> getSubjects() {
+    public ArrayList<PeriodFragment.Subject> getSubjects() {
         return subjects;
     }
 
-    void setSubjects(ArrayList<PeriodFragment.Subject> subjects) {
+    public void setSubjects(ArrayList<PeriodFragment.Subject> subjects) {
         this.subjects = subjects;
     }
 
-    ArrayList<PeriodFragment.Day> getDays() {
+    public ArrayList<PeriodFragment.Day> getDays() {
         return days;
     }
 
-    void setDays(ArrayList<PeriodFragment.Day> days) {
+    public void setDays(ArrayList<PeriodFragment.Day> days) {
         this.days = days;
-    }
-
-    String getLogin() {
-        return login;
-    }
-
-    void setLogin(String login) {
-        this.login = login;
     }
 }

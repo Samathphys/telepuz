@@ -35,23 +35,9 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-//import org.apache.http.client.HttpClient;
-//import org.apache.http.HttpResponse;
-//import org.apache.http.client.HttpClient;
-//import org.apache.http.client.methods.HttpPost;
-//import org.apache.http.entity.mime.MultipartEntity;
-//import org.apache.http.entity.mime.content.FileBody;
-//import org.apache.http.entity.mime.content.StringBody;
-////import org.apache.http.impl.client.DefaultHttpClient;
-//import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -64,12 +50,6 @@ import static com.example.sch.LoginActivity.log;
 import static com.example.sch.LoginActivity.loge;
 import static java.util.Calendar.MONTH;
 import static java.util.Calendar.YEAR;
-import static java.util.Calendar.getInstance;
-
-//import org.apache.http.client.HttpClient;
-//import org.apache.http.client.methods.HttpPost;
-//import org.apache.http.entity.mime.MultipartEntity;
-//import org.apache.http.client.methods.HttpPost;
 
 
 /**
@@ -90,8 +70,7 @@ public class ChatFragment extends Fragment {
     private ArrayList<Integer> first_msgs;
     private ScrollView scroll;
     private ArrayList<Uri> attach;
-    private boolean scrolled = false, first_time = true;
-    private MenuItem itemToEnable = null;
+    private boolean scrolled = false;
 
     int threadId = 0;
     String threadName = "";
@@ -124,10 +103,7 @@ public class ChatFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
-        menu.add(0, 1, 0, "Quit");
-        MenuItem ref = menu.add(0, 2, 0, "Refresh");
-        ref.setIcon(getResources().getDrawable(R.drawable.refresh));
-        ref.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menu.add(0, 1, 0, "Выход");
         super.onCreateOptionsMenu(menu, inflater);
     }
 
@@ -135,11 +111,6 @@ public class ChatFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == 1) {
             ((MainActivity) getActivity()).quit();
-        } else if (item.getItemId() == 2) {
-            log("refreshing chat");
-            item.setEnabled(false);
-            itemToEnable = item;
-            onViewCreated(getView(), null);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -203,319 +174,292 @@ public class ChatFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         scroll = view.findViewById(R.id.scroll);
-        if(first_time) {
-            ViewTreeObserver.OnScrollChangedListener listener = new ViewTreeObserver.OnScrollChangedListener() {
-                @Override
-                public void onScrollChanged() {
-                    if (scroll != null) {
-                        if (!scrolled)
-                            scrolled = true;
-                        else {
-                            LinearLayout l = scroll.findViewById(R.id.container);
-                            if (l.findViewWithTag("result") != null && scrolled)
-                                if (l.findViewWithTag("result").getTag(R.id.TAG_POSITION).equals("left"))
-                                    l.findViewWithTag("result").setBackground(getResources().getDrawable(R.drawable.chat_border_left));
-                                else
-                                    l.findViewWithTag("result").setBackground(getResources().getDrawable(R.drawable.chat_border));
-                        }
-                        if (scroll.getScrollY() == 0 && !uploading) {
-                            log("top!!");
-                            uploading = true;
-                            final Handler h = new Handler() {
-                                @Override
-                                public void handleMessage(Message yoyyoyoy) {
-                                    final LinearLayout container = view.findViewById(R.id.container);
-                                    LayoutInflater inflater = getLayoutInflater();
-                                    View item;
-                                    LinearLayout.LayoutParams params;
-                                    TextView tv, tv_attach;
-                                    Calendar cal = getInstance(), cal1 = getInstance();
-                                    for (int i = 0; i < /*(first_time ? msg : )*/msg.length; i++) {
-                                        item = inflater.inflate(R.layout.chat_item, container, false);
-                                        tv = item.findViewById(R.id.tv_text);
-                                        if (Html.fromHtml(msg[i]).toString().equals("")) {
-                                            ConstraintLayout.LayoutParams params1 = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
-                                            params1.setMargins(0, 0, 0, 0);
-                                            tv.setLayoutParams(params1);
-                                        }
-                                        tv.setText(Html.fromHtml(msg[i]));
-                                        tv.setMovementMethod(LinkMovementMethod.getInstance());
-                                        tv.setTextColor(Color.WHITE);
-                                        tv.setMaxWidth(view.getMeasuredWidth() - 300);
-                                        tv = item.findViewById(R.id.tv_time);
+        ViewTreeObserver.OnScrollChangedListener listener = new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                if (scroll != null) {
+                    if(!scrolled)
+                        scrolled = true;
+                    else {
+                        LinearLayout l = scroll.findViewById(R.id.container);
+                        if (l.findViewWithTag("result") != null && scrolled)
+                            if (l.findViewWithTag("result").getTag(R.id.TAG_POSITION).equals("left"))
+                                l.findViewWithTag("result").setBackground(getResources().getDrawable(R.drawable.chat_border_left));
+                            else
+                                l.findViewWithTag("result").setBackground(getResources().getDrawable(R.drawable.chat_border));
+                    }
+                    if (scroll.getScrollY() == 0 && !uploading) {
+                        log("top!!");
+                        uploading = true;
+                        final Handler h = new Handler() {
+                            @Override
+                            public void handleMessage(Message yoyyoyoy) {
+                                final LinearLayout container = view.findViewById(R.id.container);
+                                LayoutInflater inflater = getLayoutInflater();
+                                View item;
+                                LinearLayout.LayoutParams params;
+                                TextView tv, tv_attach;
+                                for (int i = 0; i < /*(first_time ? msg : )*/msg.length; i++) {
+                                    item = inflater.inflate(R.layout.chat_item, container, false);
+                                    tv = item.findViewById(R.id.tv_text);
+                                    if(Html.fromHtml(msg[i]).toString().equals("")) {
+                                        ConstraintLayout.LayoutParams params1 = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+                                        params1.setMargins(0,0,0,0);
+                                        tv.setLayoutParams(params1);
+                                    }
+                                    tv.setText(Html.fromHtml(msg[i]));
+                                    tv.setMovementMethod(LinkMovementMethod.getInstance());
+                                    tv.setTextColor(Color.WHITE);
+                                    tv.setMaxWidth(view.getMeasuredWidth()-300);
+                                    tv = item.findViewById(R.id.tv_time);
 
-                                        tv.setText(String.format(Locale.UK, "%02d:%02d", time[i].getHours(), time[i].getMinutes()));
-                                        item.setPadding(0, 16, 4, 0);
-                                        params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                                        params.gravity = Gravity.END;
-                                        if (PERSON_ID != user_ids[i]) {
-                                            ConstraintLayout l = item.findViewById(R.id.item_main);
-                                            l.setBackground(getResources().getDrawable(R.drawable.chat_border_left));
-                                            params.gravity = Gravity.START;
-                                        }
-                                        params.topMargin = 20;
-                                        params.bottomMargin = 20;
-                                        if (files[i] != null) {
-                                            for (final Attach a : files[i]) {
-                                                tv_attach = new TextView(getContext());
-                                                float size = a.size;
-                                                String s = "B";
-                                                if (size > 900) {
-                                                    s = "KB";
-                                                    size /= 1024;
-                                                }
-                                                if (size > 900) {
-                                                    s = "MB";
-                                                    size /= 1024;
-                                                }
-                                                tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f " + s + ")", size));
-                                                tv_attach.setTextColor(getResources().getColor(R.color.two));
-                                                tv_attach.setOnClickListener(new View.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(View v) {
-                                                        String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
-                                                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                                                        request.setDescription("Some description");
-                                                        request.setTitle(a.name);
-                                                        request.addRequestHeader("Cookie", COOKIE + "; site_ver=app; route=" + ROUTE + "; _pk_id.1.81ed=de563a6425e21a4f.1553009060.16.1554146944.1554139340.");
-                                                        request.allowScanningByMediaScanner();
-                                                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                                                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, a.name);
+                                    tv.setText(String.format(Locale.UK, "%02d:%02d", time[i].getHours(), time[i].getMinutes()));
+                                    item.setPadding(0, 16, 4, 0);
+                                    params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                    params.gravity = Gravity.END;
+                                    if(PERSON_ID != user_ids[i]) {
+                                        ConstraintLayout l = item.findViewById(R.id.item_main);
+                                        l.setBackground(getResources().getDrawable(R.drawable.chat_border_left));
+                                        params.gravity = Gravity.START;
+                                    }
+                                    params.topMargin = 20;
+                                    params.bottomMargin = 20;
+                                    if(files[i] != null) {
+                                        for (final Attach a: files[i]) {
+                                            tv_attach = new TextView(getContext());
+                                            float size = a.size;
+                                            String s = "B";
+                                            if  (size > 900) {
+                                                s = "KB";
+                                                size /= 1024;
+                                            }
+                                            if (size > 900) {
+                                                s = "MB";
+                                                size /= 1024;
+                                            }
+                                            tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f "+ s + ")", size ));
+                                            tv_attach.setTextColor(getResources().getColor(R.color.two));
+                                            tv_attach.setOnClickListener(new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View v) {
+                                                    String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
+                                                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                                                    request.setDescription("Some description");
+                                                    request.setTitle(a.name);
+                                                    request.addRequestHeader("Cookie", COOKIE + "; site_ver=app; route=" + ROUTE + "; _pk_id.1.81ed=de563a6425e21a4f.1553009060.16.1554146944.1554139340.");
+                                                    request.allowScanningByMediaScanner();
+                                                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                                                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, a.name);
 
-                                                        // get download service and enqueue file
-                                                        DownloadManager manager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
-                                                        manager.enqueue(request);
-                                                    }
-                                                });
-                                                tv_attach.setMaxWidth(view.getMeasuredWidth() - 300);
-                                                ((LinearLayout) item.findViewById(R.id.attach)).addView(tv_attach);
-                                            }
-                                        }
-                                        container.addView(item, 0, params);
-                                        if(i != msg.length-1) {
-                                            cal1.setTime(time[i]);
-                                            cal.setTime(time[i+1]);
-                                            //log("comparing day " + сal1.get(Calendar.DAY_OF_MONTH) + " and " + cal.get(Calendar.DAY_OF_MONTH));
-                                            if(cal1.get(Calendar.DAY_OF_MONTH) != cal.get(Calendar.DAY_OF_MONTH)) {
-                                                item = inflater.inflate(R.layout.date_divider, container, false);
-                                                tv = item.findViewById(R.id.tv_date);
-                                                tv.setText(getDate(cal));
-                                                container.addView(item, 0);
-                                            }
+                                                    // get download service and enqueue file
+                                                    DownloadManager manager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
+                                                    manager.enqueue(request);
+                                                }
+                                            });
+                                            tv_attach.setMaxWidth(view.getMeasuredWidth()-300);
+                                            ((LinearLayout)item.findViewById(R.id.attach)).addView(tv_attach);
                                         }
                                     }
-                                    scroll.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            if (container.getChildCount() >= 25 && msg.length > 0)
-                                                scroll.scrollTo(0, container.getChildAt(msg.length - 1).getBottom());
-                                        }
-                                    });
-                                    uploading = false;
+                                    container.addView(item, 0, params);
                                 }
-                            };
-                            new Thread() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
-                                                "isSearch=false&rowStart=1&rowsCount=25&threadId=" + threadId + "&msgStart=" + last_msg, null, getContext()));
-                                        msg = new String[array.length()];
-                                        time = new Date[array.length()];
-                                        user_ids = new int[array.length()];
-                                        files = new Attach[array.length()][];
-                                        msg_ids = new int[array.length()];
-                                        JSONObject tmp, tmp1;
-                                        for (int i = 0; i < array.length(); i++) {
-                                            tmp = array.getJSONObject(i);
-                                            time[i] = new Date(tmp.getLong("sendDate"));
-                                            if (tmp.getInt("attachCount") <= 0) {
-                                                files[i] = null;
-                                            } else {
-                                                files[i] = new Attach[tmp.getInt("attachCount")];
-                                                for (int j = 0; j < files[i].length; j++) {
-                                                    tmp1 = tmp.getJSONArray("attachInfo").getJSONObject(j);
-                                                    files[i][j] = new Attach(tmp1.getInt("fileId"), tmp1.getInt("fileSize"),
-                                                            tmp1.getString("fileName"), tmp1.getString("fileType"));
-                                                }
-                                            }
-                                            user_ids[i] = tmp.getInt("senderId");
-                                            msg_ids[i] = tmp.getInt("msgNum");
-                                            if (i == array.length() - 1) {
-                                                last_msg = tmp.getInt("msgNum");
-                                            }
-                                            if (!tmp.has("msg")) {
-                                                // todo
-                                                loge(tmp.toString());
-                                                msg[i] = "";
-                                                continue;
-                                            }
-                                            msg[i] = tmp.getString("msg");
-                                        }
-                                        h.sendEmptyMessage(0);
-                                    } catch (Exception e) {
-                                        loge("on scroll top: " + e.toString());
+                                scroll.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if(container.getChildCount() >= 25 && msg.length > 0)
+                                            scroll.scrollTo(0, container.getChildAt(msg.length-1).getBottom());
                                     }
-                                }
-                            }.start();
-                        } else if (scroll.getChildAt(0).getBottom()
-                                <= (scroll.getHeight() + scroll.getScrollY()) && !uploading) {
-                            log("bottom");
-                            if (first_msgs.size() == 0) return;
-                            uploading = true;
-                            final Handler h = new Handler() {
-                                @Override
-                                public void handleMessage(Message yoyoy) {
-                                    final LinearLayout container = view.findViewById(R.id.container);
-                                    LayoutInflater inflater = getLayoutInflater();
-                                    View item;
-                                    LinearLayout.LayoutParams params;
-                                    TextView tv, tv_attach;
-                                    Calendar cal = getInstance(), cal1 = getInstance();
-                                    for (int i = msg.length - 1; i >= 0; i--) {
-                                        if(i != msg.length-1) {
-                                            cal.setTime(time[i]);
-                                            cal1.setTime(time[i+1]);
-                                            if(cal1.get(Calendar.DAY_OF_MONTH) != cal.get(Calendar.DAY_OF_MONTH)) {
-                                                item = inflater.inflate(R.layout.date_divider, container, false);
-                                                tv = item.findViewById(R.id.tv_date);
-                                                tv.setText(getDate(cal));
-                                                container.addView(item);
+                                });
+                                uploading = false;
+                            }
+                        };
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
+                                            "isSearch=false&rowStart=1&rowsCount=25&threadId=" + threadId + "&msgStart=" + last_msg, null));
+                                    msg = new String[array.length()];
+                                    time = new Date[array.length()];
+                                    user_ids = new int[array.length()];
+                                    files = new Attach[array.length()][];
+                                    msg_ids = new int[array.length()];
+                                    JSONObject tmp, tmp1;
+                                    for (int i = 0; i < array.length(); i++) {
+                                        tmp = array.getJSONObject(i);
+                                        time[i] = new Date(tmp.getLong("sendDate"));
+                                        if(tmp.getInt("attachCount") <= 0) {
+                                            files[i] = null;
+                                        } else {
+                                            files[i] = new Attach[tmp.getInt("attachCount")];
+                                            for (int j = 0; j < files[i].length; j++) {
+                                                tmp1 = tmp.getJSONArray("attachInfo").getJSONObject(j);
+                                                files[i][j] = new Attach(tmp1.getInt("fileId"), tmp1.getInt("fileSize"),
+                                                        tmp1.getString("fileName"), tmp1.getString("fileType"));
                                             }
                                         }
-                                        item = inflater.inflate(R.layout.chat_item, container, false);
-                                        tv = item.findViewById(R.id.tv_text);
-                                        if (Html.fromHtml(msg[i]).toString().equals("")) {
-                                            ConstraintLayout.LayoutParams params1 = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
-                                            params1.setMargins(0, 0, 0, 0);
-                                            tv.setLayoutParams(params1);
+                                        user_ids[i] = tmp.getInt("senderId");
+                                        msg_ids[i] = tmp.getInt("msgNum");
+                                        if(i == array.length() - 1) {
+                                            last_msg = tmp.getInt("msgNum");
                                         }
-                                        tv.setText(Html.fromHtml(msg[i]));
-                                        tv.setMovementMethod(LinkMovementMethod.getInstance());
-                                        tv.setTextColor(Color.WHITE);
-                                        tv.setMaxWidth(view.getMeasuredWidth() - 300);
-                                        tv = item.findViewById(R.id.tv_time);
-                                        tv.setText(String.format(Locale.UK, "%02d:%02d", time[i].getHours(), time[i].getMinutes()));
+                                        if(!tmp.has("msg")) {
+                                            // todo
+                                            loge(tmp.toString());
+                                            msg[i] = "";
+                                            continue;
+                                        }
+                                        msg[i] = tmp.getString("msg");
+                                    }
+                                    h.sendEmptyMessage(0);
+                                } catch (Exception e) {
+                                    loge("on scroll top: " + e.toString());
+                                }
+                            }
+                        }.start();
+                    } else if(scroll.getChildAt(0).getBottom()
+                            <= (scroll.getHeight() + scroll.getScrollY()) && !uploading) {
+                        log("bottom");
+                        if(first_msgs.size() == 0) return;
+                        uploading = true;
+                        final Handler h = new Handler() {
+                            @Override
+                            public void handleMessage(Message yoyoy) {
+                                final LinearLayout container = view.findViewById(R.id.container);
+                                LayoutInflater inflater = getLayoutInflater();
+                                View item;
+                                LinearLayout.LayoutParams params;
+                                TextView tv, tv_attach;
+                                for (int i = msg.length-1; i >= 0; i--) {
+                                    item = inflater.inflate(R.layout.chat_item, container, false);
+                                    tv = item.findViewById(R.id.tv_text);
+                                    if(Html.fromHtml(msg[i]).toString().equals("")) {
+                                        ConstraintLayout.LayoutParams params1 = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+                                        params1.setMargins(0,0,0,0);
+                                        tv.setLayoutParams(params1);
+                                    }
+                                    tv.setText(Html.fromHtml(msg[i]));
+                                    tv.setMovementMethod(LinkMovementMethod.getInstance());
+                                    tv.setTextColor(Color.WHITE);
+                                    tv.setMaxWidth(view.getMeasuredWidth()-300);
+                                    tv = item.findViewById(R.id.tv_time);
+                                    tv.setText(String.format(Locale.UK, "%02d:%02d", time[i].getHours(), time[i].getMinutes()));
 //todo
-                                        item.setPadding(0, 16, 4, 0);
-                                        params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                                        params.gravity = Gravity.END;
-                                        if (PERSON_ID != user_ids[i]) {
-                                            ConstraintLayout l = item.findViewById(R.id.item_main);
-                                            l.setBackground(getResources().getDrawable(R.drawable.chat_border_left));
-                                            params.gravity = Gravity.START;
-                                        }
-                                        params.topMargin = 20;
-                                        params.bottomMargin = 20;
-                                        if (files[i] != null) {
-                                            for (final Attach a : files[i]) {
-                                                tv_attach = new TextView(getContext());
-                                                float size = a.size;
-                                                String s = "B";
-                                                if (size > 900) {
-                                                    s = "KB";
-                                                    size /= 1024;
-                                                }
-                                                if (size > 900) {
-                                                    s = "MB";
-                                                    size /= 1024;
-                                                }
-                                                tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f " + s + ")", size));
-                                                tv_attach.setTextColor(getResources().getColor(R.color.two));
-                                                tv_attach.setOnClickListener(new View.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(View v) {
-                                                        String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
-                                                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                                                        request.setDescription("Some description");
-                                                        request.setTitle(a.name);
-                                                        request.addRequestHeader("Cookie", COOKIE + "; site_ver=app; route=" + ROUTE + "; _pk_id.1.81ed=de563a6425e21a4f.1553009060.16.1554146944.1554139340.");
-                                                        request.allowScanningByMediaScanner();
-                                                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                                                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, a.name);
-
-                                                        // get download service and enqueue file
-                                                        DownloadManager manager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
-                                                        manager.enqueue(request);
-                                                    }
-                                                });
-                                                tv_attach.setMaxWidth(view.getMeasuredWidth() - 300);
-                                                ((LinearLayout) item.findViewById(R.id.attach)).addView(tv_attach);
-                                            }
-                                        }
-                                        container.addView(item, params);
+                                    item.setPadding(0, 16, 4, 0);
+                                    params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                    params.gravity = Gravity.END;
+                                    if(PERSON_ID != user_ids[i]) {
+                                        ConstraintLayout l = item.findViewById(R.id.item_main);
+                                        l.setBackground(getResources().getDrawable(R.drawable.chat_border_left));
+                                        params.gravity = Gravity.START;
                                     }
-                                    scroll.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            //if(container.getChildCount() >= 25 && msg.length > 0)
-                                            //scroll.scrollTo(0, container.getChildAt(msg.length-1).getBottom());
-                                        }
-                                    });
-                                    uploading = false;
-                                    first_msgs.remove(first_msgs.size() - 1);
-                                }
-                            };
-                            new Thread() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
-                                                "isSearch=false&rowStart=0&rowsCount=25&threadId=" + threadId + "&msgStart=" + (first_msgs.get(first_msgs.size() - 1) + 1), null, getContext()));
+                                    params.topMargin = 20;
+                                    params.bottomMargin = 20;
+                                    if(files[i] != null) {
+                                        for (final Attach a: files[i]) {
+                                            tv_attach = new TextView(getContext());
+                                            float size = a.size;
+                                            String s = "B";
+                                            if  (size > 900) {
+                                                s = "KB";
+                                                size /= 1024;
+                                            }
+                                            if (size > 900) {
+                                                s = "MB";
+                                                size /= 1024;
+                                            }
+                                            tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f "+ s + ")", size ));
+                                            tv_attach.setTextColor(getResources().getColor(R.color.two));
+                                            tv_attach.setOnClickListener(new View.OnClickListener() {
+                                                @Override
+                                                public void onClick(View v) {
+                                                    String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
+                                                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                                                    request.setDescription("Some description");
+                                                    request.setTitle(a.name);
+                                                    request.addRequestHeader("Cookie", COOKIE + "; site_ver=app; route=" + ROUTE + "; _pk_id.1.81ed=de563a6425e21a4f.1553009060.16.1554146944.1554139340.");
+                                                    request.allowScanningByMediaScanner();
+                                                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                                                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, a.name);
 
-                                        msg = new String[array.length()];
-                                        time = new Date[array.length()];
-                                        user_ids = new int[array.length()];
-                                        files = new Attach[array.length()][];
-                                        msg_ids = new int[array.length()];
-                                        JSONObject tmp, tmp1;
-                                        for (int i = 0; i < array.length(); i++) {
-                                            tmp = array.getJSONObject(i);
-                                            time[i] = new Date(tmp.getLong("sendDate"));
-                                            if (tmp.getInt("attachCount") <= 0) {
-                                                files[i] = null;
-                                            } else {
-                                                files[i] = new Attach[tmp.getInt("attachCount")];
-                                                for (int j = 0; j < files[i].length; j++) {
-                                                    tmp1 = tmp.getJSONArray("attachInfo").getJSONObject(j);
-                                                    files[i][j] = new Attach(tmp1.getInt("fileId"), tmp1.getInt("fileSize"),
-                                                            tmp1.getString("fileName"), tmp1.getString("fileType"));
+                                                    // get download service and enqueue file
+                                                    DownloadManager manager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
+                                                    manager.enqueue(request);
                                                 }
-                                            }
-                                            user_ids[i] = tmp.getInt("senderId");
-                                            msg_ids[i] = tmp.getInt("msgNum");
-                                            if (!tmp.has("msg")) {
-                                                // todo
-                                                loge(tmp.toString());
-                                                msg[i] = "";
-                                                continue;
-                                            }
-                                            msg[i] = tmp.getString("msg");
+                                            });
+                                            tv_attach.setMaxWidth(view.getMeasuredWidth()-300);
+                                            ((LinearLayout)item.findViewById(R.id.attach)).addView(tv_attach);
                                         }
-                                        h.sendEmptyMessage(0);
-                                    } catch (Exception e) {
-                                        loge("on scroll bottom: " + e.toString());
                                     }
+                                    container.addView(item, params);
                                 }
-                            }.start();
+                                scroll.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        //if(container.getChildCount() >= 25 && msg.length > 0)
+                                        //scroll.scrollTo(0, container.getChildAt(msg.length-1).getBottom());
+                                    }
+                                });
+                                uploading = false;
+                                first_msgs.remove(first_msgs.size()-1);
+                            }
+                        };
+                        new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
+                                            "isSearch=false&rowStart=0&rowsCount=25&threadId=" + threadId + "&msgStart=" + (first_msgs.get(first_msgs.size()-1)+1), null));
 
-                        }
+                                    msg = new String[array.length()];
+                                    time = new Date[array.length()];
+                                    user_ids = new int[array.length()];
+                                    files = new Attach[array.length()][];
+                                    msg_ids = new int[array.length()];
+                                    JSONObject tmp, tmp1;
+                                    for (int i = 0; i < array.length(); i++) {
+                                        tmp = array.getJSONObject(i);
+                                        time[i] = new Date(tmp.getLong("sendDate"));
+                                        if(tmp.getInt("attachCount") <= 0) {
+                                            files[i] = null;
+                                        } else {
+                                            files[i] = new Attach[tmp.getInt("attachCount")];
+                                            for (int j = 0; j < files[i].length; j++) {
+                                                tmp1 = tmp.getJSONArray("attachInfo").getJSONObject(j);
+                                                files[i][j] = new Attach(tmp1.getInt("fileId"), tmp1.getInt("fileSize"),
+                                                        tmp1.getString("fileName"), tmp1.getString("fileType"));
+                                            }
+                                        }
+                                        user_ids[i] = tmp.getInt("senderId");
+                                        msg_ids[i] = tmp.getInt("msgNum");
+                                        if(!tmp.has("msg")) {
+                                            // todo
+                                            loge(tmp.toString());
+                                            msg[i] = "";
+                                            continue;
+                                        }
+                                        msg[i] = tmp.getString("msg");
+                                    }
+                                    h.sendEmptyMessage(0);
+                                } catch (Exception e) {
+                                    loge("on scroll bottom: " + e.toString());
+                                }
+                            }
+                        }.start();
+
                     }
                 }
-            };
-            scroll.getViewTreeObserver().addOnScrollChangedListener(listener);
-        }
+            }
+        };
+        scroll.getViewTreeObserver().addOnScrollChangedListener(listener);
         h = new Handler() {
             @Override
             public void handleMessage(Message yoy) {
                 final LinearLayout container = view.findViewById(R.id.container);
-                container.removeAllViews();
                 LayoutInflater inflater = getLayoutInflater();
                 View item;
                 LinearLayout.LayoutParams params;
                 TextView tv, tv_attach;
                 Calendar cal = Calendar.getInstance(), cal1 = Calendar.getInstance();
-                log(msg.length + "");
                 for (int i = msg.length-1; i >= 0; i--) {
                     if(i != msg.length-1) {
                         cal.setTime(time[i]);
@@ -565,7 +509,7 @@ public class ChatFragment extends Fragment {
                                 s = "MB";
                                 size /= 1024;
                             }
-                            tv_attach.setText(a.name + String.format(Locale.getDefault(), " (%.2f "+ s + ")", size ));
+                            tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f "+ s + ")", size ));
                             tv_attach.setTextColor(getResources().getColor(R.color.two));
                             tv_attach.setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -655,7 +599,7 @@ public class ChatFragment extends Fragment {
                                 try {
                                     hand.sendMessage(hand.obtainMessage(0, text));
                                     if(files != null) {
-                                        //sendFile(files.get(0), threadId, text);
+                                        // todo sendFile(files.get(0), threadId, text);
                                     } else {
                                         HttpURLConnection con = (HttpURLConnection) new URL("https://app.eschool.center/ec-server/chat/sendNew").openConnection();
                                         con.setRequestMethod("POST");
@@ -693,16 +637,57 @@ public class ChatFragment extends Fragment {
                         startActivityForResult(intent, 42);
                     }
                 });
-                first_time = false;
-                if(itemToEnable != null)
-                    itemToEnable.setEnabled(true);
             }
         };
         new Thread() {
             @Override
             public void run() {
                 try {
-                    download(h);
+                    boolean found = false;
+                    if(searchMsgId == -1)
+                        found = true;
+                    JSONObject tmp, tmp1;
+                    do {
+                        JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&" +
+                                "rowStart=1&rowsCount=25&threadId=" + threadId + (last_msg == -1?"":"&msgStart="+last_msg), null));
+                        msg = new String[array.length()];
+                        time = new Date[array.length()];
+                        user_ids = new int[array.length()];
+                        files = new Attach[array.length()][];
+                        msg_ids = new int[array.length()];
+                        for (int i = 0; i < array.length(); i++) {
+                            tmp = array.getJSONObject(i);
+                            time[i] = new Date(tmp.getLong("sendDate"));
+                            if (tmp.getInt("attachCount") <= 0) {
+                                files[i] = null;
+                            } else {
+                                files[i] = new Attach[tmp.getInt("attachCount")];
+                                for (int j = 0; j < files[i].length; j++) {
+                                    tmp1 = tmp.getJSONArray("attachInfo").getJSONObject(j);
+                                    files[i][j] = new Attach(tmp1.getInt("fileId"), tmp1.getInt("fileSize"),
+                                            tmp1.getString("fileName"), tmp1.getString("fileType"));
+                                }
+                            }
+                            user_ids[i] = tmp.getInt("senderId");
+                            msg_ids[i] = tmp.getInt("msgNum");
+                            if (i == array.length() - 1)
+                                last_msg = tmp.getInt("msgNum");
+                            else if (i == 0)
+                                first_msgs.add(tmp.getInt("msgNum"));
+                            if(tmp.getInt("msgNum") == searchMsgId)
+                                found = true;
+                            if (!tmp.has("msg")) {
+                                // todo
+                                loge(tmp.toString());
+                                msg[i] = "";
+                                continue;
+                            }
+                            msg[i] = tmp.getString("msg");
+                        }
+                    } while (!found);
+                    if(first_msgs.size() > 0)
+                        first_msgs.remove(first_msgs.size()-1);
+                    h.sendEmptyMessage(1);
                 } catch (Exception e) {loge("onViewCreated() run: " + e.toString());}
             }
         }.start();
@@ -723,87 +708,24 @@ public class ChatFragment extends Fragment {
         super.onDetach();
     }
 
-    void download(Handler h) throws IOException, JSONException {
-        connect("https://app.eschool.center/ec-server/chat/readAll?threadId=" + threadId, null, getContext());
-        boolean found = false;
-        if(searchMsgId == -1)
-            found = true;
-        JSONObject tmp, tmp1;
-        last_msg = -1;
-        do {
-            JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&" +
-                    "rowStart=1&rowsCount=25&threadId=" + threadId + (last_msg == -1?"":"&msgStart="+last_msg), null, getContext()));
-            msg = new String[array.length()];
-            time = new Date[array.length()];
-            user_ids = new int[array.length()];
-            files = new Attach[array.length()][];
-            msg_ids = new int[array.length()];
-            for (int i = 0; i < array.length(); i++) {
-                tmp = array.getJSONObject(i);
-                time[i] = new Date(tmp.getLong("sendDate"));
-                if (tmp.getInt("attachCount") <= 0) {
-                    files[i] = null;
-                } else {
-                    files[i] = new Attach[tmp.getInt("attachCount")];
-                    for (int j = 0; j < files[i].length; j++) {
-                        tmp1 = tmp.getJSONArray("attachInfo").getJSONObject(j);
-                        files[i][j] = new Attach(tmp1.getInt("fileId"), tmp1.getInt("fileSize"),
-                                tmp1.getString("fileName"), tmp1.getString("fileType"));
-                    }
-                }
-                user_ids[i] = tmp.getInt("senderId");
-                msg_ids[i] = tmp.getInt("msgNum");
-                if (i == array.length() - 1)
-                    last_msg = tmp.getInt("msgNum");
-                else if (i == 0)
-                    first_msgs.add(tmp.getInt("msgNum"));
-                if(tmp.getInt("msgNum") == searchMsgId)
-                    found = true;
-                if (!tmp.has("msg")) {
-                    // todo
-                    loge(tmp.toString());
-                    msg[i] = "";
-                    continue;
-                }
-                msg[i] = tmp.getString("msg");
-            }
-        } while (!found);
-        if(first_msgs.size() > 0)
-            first_msgs.remove(first_msgs.size()-1);
-        if(h != null)
-            h.sendEmptyMessage(1);
-    }
-
-   /* private static void sendFile(Uri uri, int threadId, String text){
+    /*private static void sendFile(Uri uri, int threadId, String text){
         File file = new File(uri.getPath());
-        log("sending file, uri: " + uri.toString() + ", threadId: " + threadId + ", text: " + text);
+        log("sending file...");
         try {
-*//*//    implementation files('С:/Android Studio/Project/sch/libs/org.apache.httpcomponents.httpclient_4.2.6.v201311072007.jar')
-    implementation 'org.apache.httpcomponents:httpcore:4.4.11'
-//    implementation 'org.apache.httpcomponents:httpmime:4.5.8'
-    implementation('org.apache.httpcomponents:httpmime:4.3.6') {
-        exclude module: "httpclient"
-    }/*
             HttpClient client = new DefaultHttpClient();
             HttpPost post = new HttpPost("https://app.eschool.center/ec-server/chat/sendNew");
-            post.addHeader("Cookie", TheSingleton.getInstance().getCOOKIE() + "; site_ver=app; route=" + TheSingleton.getInstance().getROUTE() + "; _pk_id.1.81ed=de563a6425e21a4f.1553009060.16.1554146944.1554139340.");
-            post.addHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundary5uljBdgmqcUaMUOM");
             MultipartEntity entity = new MultipartEntity();
             entity.addPart("threadId", new StringBody(threadId + ""));
             entity.addPart("msgText", new StringBody(text));
-            entity.addPart("msgUID", new StringBody(System.nanoTime() + ""));
+            entity.addPart("msgUID", new StringBody(System.currentTimeMillis() + ""));
             entity.addPart("file", new FileBody(file));
-          post.setEntity(entity);
-             HttpResponse response = client.execute(post);
+            post.setEntity(entity);
+            HttpResponse response = client.execute(post);
 
-            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            String line;
-            StringBuilder result = new StringBuilder();
-            while ((line = rd.readLine()) != null) {
-                result.append(line);
-            }
-            rd.close();
-            log("response to file: " +  result.toString());
+            String body = response.getEntity().getContent().toString();
+//                String body = IOUtils.toString(response.getEntity().getContent());
+            log("response to file: " +  body);
+
 
         } catch (Exception e) {
             loge(e.toString());
