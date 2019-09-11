@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,11 +27,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -42,23 +44,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-
-import io.grpc.internal.IoUtils;
 
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
 import static android.view.View.GONE;
@@ -76,6 +68,7 @@ public class ChatFragment extends Fragment {
     private int PERSON_ID;
     private LayoutInflater inflater;
     private LinearLayout container;
+    HttpClient httpAsyncClient = AndroidHttpClient.newInstance("RAR", getContext());
 
     private Msg[] messages;
     private Handler h;
@@ -586,8 +579,6 @@ public class ChatFragment extends Fragment {
                     Msg msg;
                     for (int i = messages.length-1; i >= 0; i--) {
                         msg = messages[i];
-                        if (msg.text.equals(""))
-                            continue;
                         if(i != messages.length-1) {
                             cal.setTime(msg.time);//tg
                             cal1.setTime(messages[i+1].time);
@@ -652,7 +643,7 @@ public class ChatFragment extends Fragment {
                         }
                         container.addView(item);
                     }
-                    view.findViewById(R.id.scroll_container).setBackgroundColor(getResources().getColor(R.color.six));
+                    view.findViewById(R.id.scroll_container).setBackgroundColor(getActivity().getResources().getColor(R.color.six));
 
                     if(scroll == null)
                         scroll = view.findViewById(R.id.scroll);
@@ -815,7 +806,7 @@ public class ChatFragment extends Fragment {
                     reqEntity.addBinaryBody("file", f, ContentType.create("image/jpeg"), f.getName());
                 attach.clear();
                 reqEntity.addTextBody("threadId", "" + threadId);
-                reqEntity.addTextBody("msgUID", "" + System.currentTimeMillis());
+                reqEntity.addTextBody("msgUID", "" + d.getTime());
                 reqEntity.addTextBody("msgText", text, ContentType.parse("text/plain; charset=utf-8"));
                 post.setHeader("Cookie", TheSingleton.getInstance().getCOOKIE() + "; site_ver=app; route=" + TheSingleton.getInstance().getROUTE() + "; _pk_id.1.81ed=de563a6425e21a4f.1553009060.16.1554146944.1554139340.");
                 post.setHeader("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryfgXAnWy3pntveyQZ ");
@@ -824,10 +815,6 @@ public class ChatFragment extends Fragment {
                 System.out.println(code);
                 log("sending file code " + code);
             } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-            } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
