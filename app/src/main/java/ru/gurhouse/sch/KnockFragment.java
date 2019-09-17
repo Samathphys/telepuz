@@ -38,6 +38,9 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Random;
 
+import static ru.gurhouse.sch.LoginActivity.log;
+import static ru.gurhouse.sch.LoginActivity.loge;
+
 public class KnockFragment extends Fragment {
 
     private View view;
@@ -99,7 +102,7 @@ public class KnockFragment extends Fragment {
                             socket_write.sendText(object.toString());
                             //socket_write.disconnect();
                         } catch (Exception e) {
-                            LoginActivity.loge(e.toString());
+                            loge(e.toString());
                             if(e.getMessage().contains("503 Service Unavailable")) {
                                 Toast.makeText(context, "Сервер недоступен (#503)", Toast.LENGTH_SHORT).show();
                             }}
@@ -123,7 +126,7 @@ public class KnockFragment extends Fragment {
                         token = spl[7];
                     }
 
-                    LoginActivity.log("read: " + socket_read);
+                    log("read: " + socket_read);
 
                     socket_read = new WebSocketFactory().createSocket("wss://warm-bayou-37022.herokuapp.com/receive");
                     socket_write = new WebSocketFactory().createSocket("wss://warm-bayou-37022.herokuapp.com/submit");
@@ -131,17 +134,17 @@ public class KnockFragment extends Fragment {
                     socket_read.addListener(new WebSocketAdapter() {
                         @Override
                         public void onTextMessage(WebSocket websocket, String text) throws Exception {
-                            LoginActivity.log("received /receive: " + text);
+                            log("received /receive: " + text);
                             newMessage(text);
                         }
 
                         @Override
                         public void onSendingFrame(WebSocket websocket, WebSocketFrame frame) {
                             if (frame.getPayload() == null) {
-                                LoginActivity.loge("null frame SENT");
+                                loge("null frame SENT");
                                 return;
                             }
-                            LoginActivity.log("sent /receive: " + frame.getPayloadText());
+                            log("sent /receive: " + frame.getPayloadText());
 //                            if (frame.getPayloadText().equals("\u0003�No more WebSocket frame from the server.") || frame.getPayloadText().contains("No more WebSocket frame from the server")) {
 //                                log(2,"TRYING TO RECONNECT...");
 //                                h.sendEmptyMessage(RECONNECT);
@@ -150,7 +153,7 @@ public class KnockFragment extends Fragment {
 
                         @Override
                         public void onError(WebSocket websocket, WebSocketException cause) {
-                            LoginActivity.loge("/receive: " + cause.toString());
+                            loge("/receive: " + cause.toString());
 //                            if (cause.toString().contains("Failed to connect")) {
 //                                socket_read.connect();
 //                            }
@@ -159,7 +162,7 @@ public class KnockFragment extends Fragment {
                     socket_write.addListener(new WebSocketAdapter() {
                         @Override
                         public void onTextMessage(WebSocket websocket, String text) {
-                            LoginActivity.log("received /submit: " + text);
+                            log("received /submit: " + text);
                             if(text.contains("wrong token")) {
                                 new Thread() {
                                     @Override
@@ -167,7 +170,7 @@ public class KnockFragment extends Fragment {
                                         try {
                                             getNewToken();
                                         } catch (Exception e) {
-                                            LoginActivity.loge(e.toString());
+                                            loge(e.toString());
                                         }
                                     }
                                 }.start();
@@ -181,12 +184,12 @@ public class KnockFragment extends Fragment {
 //                                    log(0, "SENDING MESSAGE /submit : " + frame.getPayloadText());
 //                                else
 //                                    log(1, "SENDING MESSAGE /submit : " + frame.getPayloadText());
-                                LoginActivity.log("sent /submit: " + frame.getPayloadText());
+                                log("sent /submit: " + frame.getPayloadText());
                         }
 
                         @Override
                         public void onError(WebSocket websocket, WebSocketException cause) {
-                            LoginActivity.loge("/submit: " + cause.toString());
+                            loge("/submit: " + cause.toString());
 //                            Thread.sleep(10);
 //                            socket_write.connect();
 //                            snackbar.show();
@@ -225,7 +228,7 @@ public class KnockFragment extends Fragment {
                                         socket_write.sendText(object.toString());
                                     }
                                 } catch (Exception e) {
-                                    LoginActivity.log( e.toString());}}
+                                    log( e.toString());}}
                         }
                     }.start();
 
@@ -234,11 +237,11 @@ public class KnockFragment extends Fragment {
                             .put("token", token)
                             .put("msg", "true")
                             .put("name", name);
-                    LoginActivity.log("key " + id + ", token " + token);
+                    log("key " + id + ", token " + token);
 //                    sending = true;
                     socket_read.sendText(object.toString());
                 } catch (Exception e) {
-                    LoginActivity.loge(e.toString());
+                    loge(e.toString());
                 }
             }
         };
@@ -260,18 +263,18 @@ public class KnockFragment extends Fragment {
                                 String password = randomize(s);
                                 String query = "type=lp&login=" + login + "&password=" + password + "&info=можно не надо&name=" + s;
                                 String s = connect("https://warm-bayou-37022.herokuapp.com/reg", query);//obj.toString());
-                                LoginActivity.loge("registration: " + s);
+                                loge("registration: " + s);
 
                                 s = connect("https://warm-bayou-37022.herokuapp.com/login?type=lp&login=" + login + "&" +
                                         "password=" + password + "&save=true", null);
-                                LoginActivity.log("login: " + s);
+                                log("login: " + s);
                                 String[] spl = s.split("\"");
                                 if(spl.length > 10) {
                                     pref.edit().putString("knock_id", spl[1]).putString("knock_token", spl[3]).apply();
                                 }
                                 thread.start();
                             } catch (Exception e) {
-                                LoginActivity.loge(e.toString());}
+                                loge(e.toString());}
                         }
                     }.start();
                 }
@@ -293,7 +296,7 @@ public class KnockFragment extends Fragment {
                                 pings.remove((int) delete.get(i));
                             }
                             if(delete.size() != 0)
-                                LoginActivity.log(delete.size() + " users are not more online");
+                                log(delete.size() + " users are not more online");
                             if(pings.size() == 0)
                                 continue;
                             final int count = pings.size()-1;
@@ -319,7 +322,7 @@ public class KnockFragment extends Fragment {
                         }
                         Thread.sleep(1000);
                     } catch (Exception e) {
-                        LoginActivity.loge(e.toString());}
+                        loge(e.toString());}
                 }
             }
         }.start();
@@ -334,7 +337,7 @@ public class KnockFragment extends Fragment {
             public void onScrollChanged() {
                 // todo подгрузка
                 if (scroll.getScrollY() == 0 && !uploading) {
-                    LoginActivity.log("top!!");
+                    log("top!!");
                     uploading = true;
                     upload_count++;
                     try {
@@ -346,7 +349,7 @@ public class KnockFragment extends Fragment {
                         obj.put("token", token);
                         socket_read.sendText(obj.toString());
                     } catch (Exception e) {
-                        LoginActivity.loge(e.toString());
+                        loge(e.toString());
                     }
                 }
             }
@@ -358,12 +361,12 @@ public class KnockFragment extends Fragment {
         final boolean uploading = this.uploading;
         final JSONObject object = new JSONObject(text), last = (uploading?last_msg_up:last_msg);
         if(!object.has("system")) {
-            LoginActivity.loge("no system tag:");
-            LoginActivity.loge(object.toString());
+            loge("no system tag:");
+            loge(object.toString());
             return;
         }
         if(getActivity() == null)
-            LoginActivity.loge("getactivity null");
+            loge("getactivity null");
 
         // case usual message
         if (object.has("uuid") && object.has("type") && getActivity() != null) {
@@ -431,9 +434,9 @@ public class KnockFragment extends Fragment {
                                     scroll.scrollTo(0, scroll.getChildAt(0).getBottom());
                             }
                         });
-                        LoginActivity.log("text: " + object.getString("text"));
+                        log("text: " + object.getString("text"));
                     } catch (Exception e) {
-                        LoginActivity.loge("m: " + e.toString());}
+                        loge("m: " + e.toString());}
                 }
             });
         }
@@ -463,7 +466,7 @@ public class KnockFragment extends Fragment {
     }
 
     private void getNewToken() throws Exception {
-        LoginActivity.log("getting new token, auth token: "+ auth_token + ", id: " + id);
+        log("getting new token, auth token: "+ auth_token + ", id: " + id);
 
         String[] spl = connect("https://warm-bayou-37022.herokuapp.com/check?cookie=" + auth_token + "&id=" + id,
                 null).split("\"");
@@ -491,7 +494,7 @@ public class KnockFragment extends Fragment {
     }
 
     static String connect(String url, String query) throws IOException {
-        LoginActivity.log("connect w/o cookies: " + url);
+        log("connect w/o cookies: " + url);
         HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
         if(query == null) {
             con.setRequestMethod("GET");
@@ -503,9 +506,9 @@ public class KnockFragment extends Fragment {
             con.getOutputStream().write(query.getBytes());
         }
         if(con.getResponseCode() != 200) {
-            LoginActivity.loge("connect failed, code " + con.getResponseCode() + ", message: " + con.getResponseMessage());
-            LoginActivity.loge(url);
-            LoginActivity.loge("query: '" + query + "'");
+            loge("connect failed, code " + con.getResponseCode() + ", message: " + con.getResponseMessage());
+            loge(url);
+            loge("query: '" + query + "'");
             return "";
         }
         if(con.getInputStream() != null) {

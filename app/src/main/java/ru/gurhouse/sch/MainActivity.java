@@ -60,10 +60,9 @@ public class MainActivity extends AppCompatActivity {
     private PeriodFragment1 periodFragment1;
     private MessagesFragment messagesFragment;
     private ConstraintLayout main, chat;
-    private Snackbar snackbar;
     private String[] period;
     private int state = 2;
-    private BroadcastReceiver receiver, internet_receiver, auth_receiver;
+    private BroadcastReceiver receiver,  auth_receiver;
     private BottomNavigationView bottomnav;
     private BottomNavigationItemView itemView;
     private boolean mode0 = false;
@@ -187,16 +186,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        internet_receiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if(hasConnection(context)) {
-                    snackbar.dismiss();
-                } else {
-                    snackbar.show();
-                }
-            }
-        };
         auth_receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -209,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
         main = findViewById(R.id.main_container);
         chat = findViewById(R.id.chat_container);
 
-        snackbar = Snackbar.make(findViewById(R.id.frame), "Нет подключения к интернету", Snackbar.LENGTH_INDEFINITE);
+        //snackbar = Snackbar.make(findViewById(R.id.frame), "Нет подключения к интернету", Snackbar.LENGTH_INDEFINITE);
 
         bottomnav = findViewById(R.id.bottomnav);
         bottomnav.setOnNavigationItemSelectedListener(mNavigationListener);
@@ -457,7 +446,12 @@ public class MainActivity extends AppCompatActivity {
             log(a.get(i).toString());
         }
         //log("top: " + getStackTop());
+<<<<<<< HEAD
         if(getStackTop() instanceof chat1Fragment || getStackTop() instanceof DayFragment || getStackTop() instanceof MarkFragment ||
+=======
+        boolean chat = getStackTop() instanceof ChatFragment;
+        if(getStackTop() instanceof ChatFragment || getStackTop() instanceof DayFragment || getStackTop() instanceof MarkFragment ||
+>>>>>>> upstream/master
                 getStackTop() instanceof SubjectFragment || getStackTop() instanceof KnockFragment || getStackTop() instanceof Countcoff) {
             set_visible(true);
             if (getStackTop() instanceof chat1Fragment || getStackTop() instanceof KnockFragment) {
@@ -473,6 +467,10 @@ public class MainActivity extends AppCompatActivity {
                     || getStackTop() instanceof ScheduleFragment// || getStackTop() instanceof ScheduleFragment1
                     || getStackTop() instanceof MessagesFragment))
                 getSupportFragmentManager().popBackStack();
+        if(getStackTop() instanceof ChatFragment && a.get(a.size()-2) instanceof MessagesFragment)
+            ((MessagesFragment) a.get(a.size()-2)).refresh();
+        else
+            log("lol " + chat + getStackTop());
     }
 
     @Override
@@ -481,7 +479,6 @@ public class MainActivity extends AppCompatActivity {
         log("onResume MainActivity");
         try {
             registerReceiver(receiver, new IntentFilter("ru.gurhouse.sch.action"));
-            registerReceiver(internet_receiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
             registerReceiver(auth_receiver, new IntentFilter("ru.gurhouse.sch.auth"));
         } catch (Exception e) {
             loge(e.toString());
@@ -501,7 +498,6 @@ public class MainActivity extends AppCompatActivity {
         log("onPause");
         try {
             unregisterReceiver(receiver);
-            unregisterReceiver(internet_receiver);
             unregisterReceiver(auth_receiver);
         } catch (Exception e) {
             loge(e.toString());

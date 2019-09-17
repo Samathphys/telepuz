@@ -8,6 +8,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import static ru.gurhouse.sch.LoginActivity.log;
+
 public class ThanksActivity extends AppCompatActivity {
 
     private int count = 0;
@@ -24,13 +26,13 @@ public class ThanksActivity extends AppCompatActivity {
                 SharedPreferences pref = getSharedPreferences("pref", MODE_PRIVATE);
                 if(!pref.getBoolean("easteregg1", false)) {
                     count++;
-                    LoginActivity.log("clicked " + count + " times");
+                    log("clicked " + count + " times");
                     if (count == 5) {
                         Toast.makeText(getApplicationContext(), "Поздравляю! Вы открыли пасхалку!", Toast.LENGTH_LONG).show();
                         pref.edit().putBoolean("easteregg1", true).apply();
                     }
                 } else
-                    LoginActivity.log("пасхалка уже открыта");
+                    log("пасхалка уже открыта");
             }
         });
         Button esc = findViewById(R.id.btn_ok);

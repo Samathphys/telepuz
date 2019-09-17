@@ -180,6 +180,11 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                 @Override
                 public void onPageSelected(int position) {
                     int w;
+                    if(pager.getCurrentItem() == -1) {
+                        loge("current item is -1");
+                        sasha("current item is -1");
+                        return;
+                    }
                     if (pageFragments.get(pager.getCurrentItem() - 1).c.get(Calendar.DAY_OF_WEEK) - 1 == 0) {
                         w = 7;
                     } else
@@ -388,7 +393,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
     }
 
     void Download3() {
-        log("Dowload2()");
+        log("Dowload3()");
         new Thread() {
             @Override
             public void run() {

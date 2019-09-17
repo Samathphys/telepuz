@@ -41,8 +41,10 @@ import java.util.Date;
 import java.util.Locale;
 
 import static ru.gurhouse.sch.LoginActivity.connect;
+import static ru.gurhouse.sch.LoginActivity.log;
+import static ru.gurhouse.sch.LoginActivity.loge;
 
-public class    MessagesFragment extends Fragment {
+public class MessagesFragment extends Fragment {
 
     private int PERSON_ID;
     private String[] senders, topics;
@@ -85,7 +87,7 @@ public class    MessagesFragment extends Fragment {
                         count+=f_newCounts.get(i);
                     }
                     h.sendMessage(h.obtainMessage(123, count, count));
-                    JSONArray array = new JSONArray(LoginActivity.connect("https://app.eschool.center/ec-server/usr/olist", null, context));
+                    JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/usr/olist", null, context));
                     JSONObject obj;
                     String fio, info = "";
                     olist = new Person[array.length()];
@@ -126,11 +128,11 @@ public class    MessagesFragment extends Fragment {
                             olist[i].words = fio.split(" ");
                         olist[i].info = info;
                     }
-                    LoginActivity.log("olist l: " + olist.length);
+                    log("olist l: " + olist.length);
                     READY = true;
                     h.sendEmptyMessage(431412574);
                 } catch (Exception e) {
-                    LoginActivity.loge(e.toString());
+                    loge(e.toString());
                 }
             }
         }.start();
@@ -182,7 +184,7 @@ public class    MessagesFragment extends Fragment {
                     Spanned mess;
                     String s;
                     if(search_mode == 1) {
-                        LoginActivity.log("result: " + result.size());
+                        log("result: " + result.size());
                         s_count = -1;
                         count = -1;
                         Person person;
@@ -235,32 +237,27 @@ public class    MessagesFragment extends Fragment {
                                          @Override
                                          public void run() {
                                              try {
-                                                 final JSONObject threads = new JSONObject(LoginActivity.connect("https://app.eschool.center/ec-server/chat/privateThreads", null, context));
+                                                 final JSONObject threads = new JSONObject(connect("https://app.eschool.center/ec-server/chat/privateThreads", null, context));
                                                  if(threads.has(prsId + "")) {
-                                                     LoginActivity.log("has");
+                                                     log("has");
                                                      getActivity().runOnUiThread(new Runnable() {
                                                          @Override
                                                          public void run() {
                                                              try {
                                                                  loadChat(threads.getInt(prsId + ""), fio, -1, false);
                                                              } catch (JSONException e) {
-                                                                 LoginActivity.loge(e.toString());}
+                                                                 loge(e.toString());}
                                                          }
                                                      });
                                                  } else {
-                                                     LoginActivity.log("hasn't prsId " + prsId);
-                                                     final int threadId = Integer.parseInt(LoginActivity.connect("https://app.eschool.center/ec-server/chat/saveThread",
+                                                     log("hasn't prsId " + prsId);
+                                                     final int threadId = Integer.parseInt(connect("https://app.eschool.center/ec-server/chat/saveThread",
                                                              "{\"threadId\":null,\"senderId\":null,\"imageId\":null,\"subject\":null,\"isAllowReplay\":2,\"isGroup\":false,\"interlocutor\":" + prsId + "}",
                                                              context, true));
-                                                     getActivity().runOnUiThread(new Runnable() {
-                                                         @Override
-                                                         public void run() {
-                                                             loadChat(threadId, fio, -1, false);
-                                                         }
-                                                     });
+                                                     getActivity().runOnUiThread(() -> loadChat(threadId, fio, -1, false));
                                                  }
                                              } catch (Exception e) {
-                                                 LoginActivity.loge(e.toString());}
+                                                 loge(e.toString());}
                                          }
                                      }.start();
                                 }
@@ -281,7 +278,7 @@ public class    MessagesFragment extends Fragment {
                         mess = Html.fromHtml(s_messages.get(i));
 
                         index = mess.toString().toLowerCase().indexOf(query.toLowerCase());
-                        LoginActivity.log("index: " + index);
+                        log("index: " + index);
                         int start, end;
                         if(index > 30)
                             start = index-30;
@@ -312,7 +309,7 @@ public class    MessagesFragment extends Fragment {
                         container.addView(item, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                         container.addView(inflater.inflate(R.layout.divider, container, false));
                     }
-                    LoginActivity.log("shown count: " + s_senders.size());
+                    log("shown count: " + s_senders.size());
                     if(s_count != -1)
                         s_count = s_senders.size();
                     getView().findViewById(R.id.loading_bar).setVisibility(View.INVISIBLE);
@@ -330,14 +327,14 @@ public class    MessagesFragment extends Fragment {
                     q = q.substring(1, q.length()-1);
                 final String query = q;
                 getView().findViewById(R.id.tv_error).setVisibility(View.INVISIBLE);
-                LoginActivity.log( "query: '" + query + "'");
+                log( "query: '" + query + "'");
 
                 s_query = query;
                 this.query = query;
                 getView().findViewById(R.id.loading_bar).setVisibility(View.VISIBLE);
                 getView().findViewById(R.id.scroll).setVisibility(View.INVISIBLE);
 
-                LoginActivity.log("search mode " + search_mode);
+                log("search mode " + search_mode);
                 if(search_mode == 0) {
                     new Thread() {
                         @Override
@@ -350,8 +347,8 @@ public class    MessagesFragment extends Fragment {
                                 s_msgIds = new ArrayList<>();
                                 s_group = new ArrayList<>();
 
-                                String result = LoginActivity.connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=1&rowsCount=15&text=" + query, null, context);
-                                LoginActivity.log("search result: " + result);
+                                String result = connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=1&rowsCount=15&text=" + query, null, context);
+                                log("search result: " + result);
                                 JSONArray array = new JSONArray(result), a, b;
                                 if (array.length() == 0) {
                                     error = "Нет сообщений, удовлетворяющих условиям поиска";
@@ -364,17 +361,17 @@ public class    MessagesFragment extends Fragment {
                                     obj = array.getJSONObject(i);
                                     a = obj.getJSONArray("filterNumbers");
                                     for (int j = 0; j < a.length(); j++) {
-                                        result = LoginActivity.connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
+                                        result = connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
                                                 "&threadId=" + obj.getInt("threadId") + "&msgStart=" + (a.optInt(j) + 1), null, context);
-                                        LoginActivity.log("result: " + result);
+                                        log("result: " + result);
                                         b = new JSONArray(result);
                                         c = b.getJSONObject(0);
                                         obj = array.getJSONObject(i);
                                         A = obj.getString("senderFio").split(" ")[0];
                                         B = obj.getString("senderFio").split(" ")[1];
                                         if (obj.getString("senderFio").split(" ").length <= 2) {
-                                            LoginActivity.loge("fio strange:");
-                                            LoginActivity.loge(obj.toString());
+                                            loge("fio strange:");
+                                            loge(obj.toString());
                                             C = "a";
                                         } else
                                             C = obj.getString("senderFio").split(" ")[2];
@@ -385,14 +382,17 @@ public class    MessagesFragment extends Fragment {
                                         Date date = new Date(c.getLong("createDate"));
                                         s_time.add(String.format(Locale.UK, "%02d:%02d", date.getHours(), date.getMinutes()));
 
-                                        s_group.add(c.getInt("addrCnt") > 2);
+                                        if(c.has("addrCnt"))
+                                            s_group.add(c.getInt("addrCnt") > 2);
+                                        else
+                                            s_group.add(false);
                                     }
                                 }
                                 if (array.length() < 15)
                                     s_count = -1;
                                 h.sendEmptyMessage(0);
                             } catch (Exception e) {
-                                LoginActivity.loge(e.toString());
+                                loge(e.toString());
                             }
                         }
                     }.start();
@@ -426,7 +426,7 @@ public class    MessagesFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String s) {
-                LoginActivity.log("query changed: " + s);
+                log("query changed: " + s);
                 String q = s;
                 if(s.replaceAll(" ", "").equals(""))
                     return false;
@@ -474,7 +474,7 @@ public class    MessagesFragment extends Fragment {
 
             @Override
             public boolean onMenuItemActionCollapse(MenuItem item) {
-                LoginActivity.log("collapsing");
+                log("collapsing");
                 Bundle bundle = new Bundle();
                 bundle.putBoolean("collapsing", true);
                 //onViewCreated(getView(), bundle);
@@ -502,7 +502,7 @@ public class    MessagesFragment extends Fragment {
                 search_mode = 0;
                 break;
         }
-        LoginActivity.log("options item selected");
+        log("options item selected");
         return super.onOptionsItemSelected(item);
     }
 
@@ -510,7 +510,7 @@ public class    MessagesFragment extends Fragment {
 
     @Override
     public void onResume() {
-        LoginActivity.log("onResume() MessagesF");
+        log("onResume() MessagesF");
         Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
         toolbar.setSubtitle("");
         super.onResume();
@@ -530,7 +530,7 @@ public class    MessagesFragment extends Fragment {
                 return;
             else if(!savedInstanceState.getBoolean("collapsing"))
                 return;
-        LoginActivity.log("onViewCreated");
+        log("onViewCreated");
         /*int I = 0;
         while(true) {
             try {
@@ -545,20 +545,20 @@ public class    MessagesFragment extends Fragment {
                 start();
         }*/
         if(view == null || f_senders == null) {
-            LoginActivity.loge("null in MessagesFragment");
+            loge("null in MessagesFragment");
             return;
         }
 
         if(fromNotification) {
-            LoginActivity.log("fromNotif");
-            loadChat(notifThreadId, f_senders.get(f_threadIds.indexOf(notifThreadId)), -1, notifCount > 2);
+            log("fromNotif");
+            loadChat(notifThreadId, (notifCount > 2?f_topics:f_senders).get(f_threadIds.indexOf(notifThreadId)), -1, notifCount > 2);
         }
     }
 
     void show() {
         final LinearLayout container1 = view.findViewById(R.id.container);
         if(container1 == null) {
-            LoginActivity.loge("container null in MessagesFragment");
+            loge("container null in MessagesFragment");
             return;
         }
         container1.removeAllViews();
@@ -614,7 +614,7 @@ public class    MessagesFragment extends Fragment {
                     if (f_newCounts.get(i) > 0) {
                         tv.setVisibility(View.VISIBLE);
                         tv.setText(f_newCounts.get(i) + "");
-                        LoginActivity.loge("new msg: " + f_senders.get(i));
+                        loge("new msg: " + f_senders.get(i));
                     }
                     c += f_newCounts.get(i);
                     final int users = f_users.get(i);
@@ -625,7 +625,7 @@ public class    MessagesFragment extends Fragment {
                             textv.setText("");
                             textv.setVisibility(View.INVISIBLE);
                         }
-                        loadChat(f_threadIds.get(j), f_senders.get(j), -1, users > 2);
+                        loadChat(f_threadIds.get(j), (users > 2?f_topics:f_senders).get(j), -1, users > 2);
                     });
                     fitems[i] = item;
                 }
@@ -641,7 +641,7 @@ public class    MessagesFragment extends Fragment {
                         BottomNavigationMenuView bottomNavigationMenuView =
                                 (BottomNavigationMenuView) bottomnav.getChildAt(0);
                         final BottomNavigationItemView itemView = (BottomNavigationItemView)  bottomNavigationMenuView.getChildAt(2);
-                        LoginActivity.log("unread messages count: " + C);
+                        log("unread messages count: " + C);
                         tv = itemView.findViewById(R.id.tv_badge);
                         if(C > 0) {
                             tv.setVisibility(View.VISIBLE);
@@ -651,12 +651,9 @@ public class    MessagesFragment extends Fragment {
 
                         scroll.scrollTo(0, 0);
                         refreshL = view.findViewById(R.id.l_refresh);
-                        refreshL.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                            @Override
-                            public void onRefresh() {
-                                LoginActivity.log("refreshing rar");
-                                refresh();
-                            }
+                        refreshL.setOnRefreshListener(() -> {
+                            log("refreshing rar");
+                            refresh();
                         });
                         savedView = view;
 //                    }
@@ -673,9 +670,9 @@ public class    MessagesFragment extends Fragment {
                         public void onScrollChanged() {
                             if (scroll.getChildAt(0).getBottom() - 200
                                     <= (scroll.getHeight() + scroll.getScrollY()) && !uploading) {
-                                LoginActivity.log("bottom");
+                                log("bottom");
                                 if (count == -1) {
-                                    LoginActivity.log("all threads are shown");
+                                    log("all threads are shown");
                                     return;
                                 }
                                 uploading = true;
@@ -716,10 +713,10 @@ public class    MessagesFragment extends Fragment {
                                                     public void onClick(View v) {
                                                         if (f_count != -1) {
                                                             loadChat(f_threadIds.get(f_count + 25 - (l - j)),
-                                                                    f_senders.get(f_count + 25 - (l - j)), -1, u > 2);
+                                                                    (u > 2?f_topics:f_senders).get(f_count + 25 - (l - j)), -1, u > 2);
                                                         } else {
                                                             loadChat(f_threadIds.get(f_threadIds.size() - (l - j)),
-                                                                    f_senders.get(f_threadIds.size() - (l - j)), -1, u > 2);
+                                                                    (u > 2?f_topics:f_senders).get(f_threadIds.size() - (l - j)), -1, u > 2);
                                                         }
                                                     }
                                                 });
@@ -746,7 +743,7 @@ public class    MessagesFragment extends Fragment {
                                                 mess = Html.fromHtml(s_messages.get(i));
 
                                                 index = mess.toString().toLowerCase().indexOf(s_query.toLowerCase());
-                                                LoginActivity.log("index: " + index);
+                                                log("index: " + index);
                                                 int start, end;
                                                 if (index > 30)
                                                     start = index - 30;
@@ -787,7 +784,7 @@ public class    MessagesFragment extends Fragment {
                                             if (s_senders == null) {
                                                 if (count == -1)
                                                     return;
-                                                JSONArray array = new JSONArray(LoginActivity.connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=" + (count + 1) + "&rowsCount=25", null, context));
+                                                JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=" + (count + 1) + "&rowsCount=25", null, context));
                                                 senders = new String[array.length()];
                                                 topics = new String[array.length()];
                                                 users = new int[array.length()];
@@ -795,7 +792,7 @@ public class    MessagesFragment extends Fragment {
                                                 newCounts = new int[array.length()];
                                                 JSONObject obj;
                                                 String a, b, c;
-                                                LoginActivity.log(array.length() + "");
+                                                log(array.length() + "");
                                                 if (array.length() < 25)
                                                     count = -1;
                                                 for (int i = 0; i < array.length(); i++) {
@@ -803,8 +800,8 @@ public class    MessagesFragment extends Fragment {
                                                     a = obj.getString("senderFio").split(" ")[0];
                                                     b = obj.getString("senderFio").split(" ")[1];
                                                     if (obj.getString("senderFio").split(" ").length <= 2) {
-                                                        LoginActivity.loge("fio strange:");
-                                                        LoginActivity.loge(obj.toString());
+                                                        loge("fio strange:");
+                                                        loge(obj.toString());
                                                         c = "a";
                                                     } else
                                                         c = obj.getString("senderFio").split(" ")[2];
@@ -830,11 +827,11 @@ public class    MessagesFragment extends Fragment {
                                                     f_topics.add(topics[i]);
                                                     f_newCounts.add(newCounts[i]);
                                                 }
-                                                LoginActivity.log("first thread: " + senders[0]);
+                                                log("first thread: " + senders[0]);
                                                 h.sendEmptyMessage(0);
                                             } else if (s_count != -1 && search_mode != 1) {
-                                                String result = LoginActivity.connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=" + s_count + "&rowsCount=25&text=" + s_query, null, context);
-                                                LoginActivity.log("search result: " + result);
+                                                String result = connect("https://app.eschool.center/ec-server/chat/searchThreads?rowStart=" + s_count + "&rowsCount=25&text=" + s_query, null, context);
+                                                log("search result: " + result);
                                                 JSONArray array = new JSONArray(result), a, b;
                                                 if (array.length() == 0) {
                                                     h.sendEmptyMessage(2);
@@ -845,7 +842,7 @@ public class    MessagesFragment extends Fragment {
                                                     obj = array.getJSONObject(i);
                                                     a = obj.getJSONArray("filterNumbers");
                                                     for (int j = 0; j < a.length(); j++) {
-                                                        result = LoginActivity.connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
+                                                        result = connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&rowStart=0&rowsCount=1" +
                                                                 "&threadId=" + obj.getInt("threadId") + "&msgStart=" + (/*obj.getInt("msgNum")*/a.optInt(j) + 1), null, context);
 
                                                         b = new JSONArray(result);
@@ -862,38 +859,25 @@ public class    MessagesFragment extends Fragment {
                                                 h.sendMessage(h.obtainMessage(1, array.length() == 25 ? 0 : 1, 0));
                                             }
                                         } catch (Exception e) {
-                                            LoginActivity.loge(e.toString());
+                                            loge(e.toString());
                                         }
                                     }
                                 }.start();
                             }
                         }
                     };
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            scroll.getViewTreeObserver()
-                                    .addOnScrollChangedListener(scrollListener);
-                        }
-                    });
+                    getActivity().runOnUiThread(() -> scroll.getViewTreeObserver()
+                            .addOnScrollChangedListener(scrollListener));
                 }
             }.start();
             Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
             toolbar.setTitle("Сообщения");
-            toolbar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    LoginActivity.log("click on toolbar");
-                    if(!(((MainActivity) getActivity()).getStackTop() instanceof MessagesFragment))
-                        return;
-                    final ScrollView scroll = view.findViewById(R.id.scroll);
-                    scroll.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            scroll.scrollTo(0, 0);
-                        }
-                    });
-                }
+            toolbar.setOnClickListener(v -> {
+                log("click on toolbar");
+                if(!(((MainActivity) getActivity()).getStackTop() instanceof MessagesFragment))
+                    return;
+                final ScrollView scroll1 = view.findViewById(R.id.scroll);
+                scroll1.post(() -> scroll1.scrollTo(0, 0));
             });
             setHasOptionsMenu(true);
             ((MainActivity)getActivity()).setSupportActionBar(toolbar);
@@ -903,18 +887,18 @@ public class    MessagesFragment extends Fragment {
         view.findViewById(R.id.loading_bar).setVisibility(View.INVISIBLE);
         view.findViewById(R.id.l_refresh).setVisibility(View.VISIBLE);
         if(fromNotification) {
-            LoginActivity.log("fromNotif");
+            log("fromNotif");
             loadChat(notifThreadId, f_senders.get(f_threadIds.indexOf(notifThreadId)), -1, notifCount > 2);
         }
         shown = true;
     }
 
     void newMessage(String text, long time, int sender_id, int thread_id) {
-        LoginActivity.log("new message in MessagesFragment");
+        log("new message in MessagesFragment");
         LinearLayout container = view.findViewById(R.id.container);
         View thread = container.findViewWithTag(thread_id);
         if(thread == null) {
-            LoginActivity.loge("this thread was not found");
+            loge("this thread was not found");
             return;
         }
         TextView tv = thread.findViewById(R.id.tv_new);
@@ -942,7 +926,7 @@ public class    MessagesFragment extends Fragment {
 
     private void download(Handler handler) throws JSONException, IOException {
         JSONArray array = new JSONArray(
-                LoginActivity.connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=1&rowsCount=25",
+                connect("https://app.eschool.center/ec-server/chat/threads?newOnly=false&row=1&rowsCount=25",
                         null, context));
         senders = new String[array.length()];
         topics = new String[array.length()];
@@ -951,13 +935,20 @@ public class    MessagesFragment extends Fragment {
         newCounts = new int[array.length()];
         JSONObject obj;
         String a, b, c;
-        LoginActivity.log(array.length() + "");
+        log(array.length() + "");
         for (int i = 0; i < array.length(); i++) {
             obj = array.getJSONObject(i);
-            a = obj.getString("senderFio").split(" ")[0];
-            b = obj.getString("senderFio").split(" ")[1];
-            c = obj.getString("senderFio").split(" ")[2];
-            senders[i] = a + " " + b.charAt(0) + ". " + c.charAt(0) + ".";
+            String[] senderFio = obj.getString("senderFio").split(" ");
+            a = "";
+            b = "";
+            c = "";
+            if(senderFio.length > 0)
+                a = senderFio[0];
+            if(senderFio.length > 1)
+                b = senderFio[1];
+            if(senderFio.length > 2)
+                c = senderFio[2];
+            senders[i] = a + " " + (b.equals("")?"":b.charAt(0) + ". ") + (c.equals("")?"":c.charAt(0) + ".");
             if(obj.getString("subject").equals(" "))
                 if(obj.has("msgPreview"))
                     topics[i] = obj.getString("msgPreview");
@@ -984,7 +975,7 @@ public class    MessagesFragment extends Fragment {
             f_topics.add(topics[i]);
             f_newCounts.add(newCounts[i]);
         }
-        LoginActivity.log("first thread: " + senders[0]);
+        log("first thread: " + senders[0]);
         if(handler != null)
             handler.sendEmptyMessage(0);
     }
@@ -1002,7 +993,7 @@ public class    MessagesFragment extends Fragment {
 
             @Override
             public void handleMessage(Message msg) {
-                LoginActivity.log("handling");
+                log("handling");
                 items = new View[f_senders.size()];
                 final LinearLayout container1 = view.findViewById(R.id.container);
                 if(container1 == null)
@@ -1113,7 +1104,7 @@ public class    MessagesFragment extends Fragment {
                 try {
                     download(h);
                 } catch (Exception e) {
-                    LoginActivity.loge("refreshing: " + e.toString());}
+                    loge("refreshing: " + e.toString());}
             }
         }.start();
     }
@@ -1121,8 +1112,13 @@ public class    MessagesFragment extends Fragment {
     private void loadChat(int threadId, String threadName, int searchId, boolean group) {
         fromNotification = false;
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
+<<<<<<< HEAD
         chat1Fragment fragment = new chat1Fragment();
         LoginActivity.log("chat thread " + threadId);
+=======
+        ChatFragment fragment = new ChatFragment();
+        log("chat thread " + threadId);
+>>>>>>> upstream/master
         fragment.threadId = threadId;//f_threadIds.get(j);
         fragment.threadName = threadName;//f_senders.get(j);
         fragment.context = context;
@@ -1137,7 +1133,7 @@ public class    MessagesFragment extends Fragment {
 
     public View getView() {
         if(view == null) {
-            LoginActivity.loge("null view!!");
+            loge("null view!!");
             if(super.getView() != null)
                 return super.getView();
             else

@@ -31,6 +31,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
         switch(intent.getIntExtra("action", -1)) {
             case ACTION_READ:
                 log("action read, extra: " + intent.getIntExtra("threadId", -1));
+
                 ArrayList<TheSingleton.Notification> notifications = new ArrayList<>(TheSingleton.getInstance().getNotifications());
                 NotificationManagerCompat manager = NotificationManagerCompat.from(context);
                 int count = 0;
@@ -53,6 +54,7 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
                 s.append("]");
                 log(s.toString());
                 log("deleted " + count + " notification" + (count != 1 ? "s" : ""));
+
                 new Thread() {
                     @Override
                     public void run() {
