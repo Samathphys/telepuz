@@ -81,41 +81,25 @@ public class SettingsActivity extends AppCompatActivity {
         Switch auto = findViewById(R.id.switch_auto);
         final SharedPreferences pref = getSharedPreferences("pref", 0);
         auto.setChecked(pref.getBoolean("auto", true));
-        auto.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                log("switch1: " + isChecked);
-                pref.edit().putBoolean("auto", isChecked).apply();
+        auto.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            log("switch1: " + isChecked);
+            pref.edit().putBoolean("auto", isChecked).apply();
 
-            }
         });
 
         Switch period = findViewById(R.id.switch_period);
         period.setChecked(pref.getBoolean("period_normal", false));
-        period.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                pref.edit().putBoolean("period_normal", isChecked).apply();
-            }
-        });
+        period.setOnCheckedChangeListener((buttonView, isChecked) -> pref.edit().putBoolean("period_normal", isChecked).apply());
 
-        findViewById(R.id.btn_quit).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setResult(RESULT_OK, new Intent().putExtra("goal", "quit"));
-                finish();
-            }
+        findViewById(R.id.btn_quit).setOnClickListener(v -> {
+            setResult(RESULT_OK, new Intent().putExtra("goal", "quit"));
+            finish();
         });
 
 
         Switch chat = findViewById(R.id.switch_chat);
         chat.setChecked(pref.getBoolean("show_chat", true));
-        chat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                pref.edit().putBoolean("show_chat", isChecked).apply();
-            }
-        });
+        chat.setOnCheckedChangeListener((buttonView, isChecked) -> pref.edit().putBoolean("show_chat", isChecked).apply());
 
         et_nickname = findViewById(R.id.et_nickname);
         kk_enabled = !pref.getString("knock_name", "").equals("");
@@ -127,25 +111,22 @@ public class SettingsActivity extends AppCompatActivity {
             et_nickname.setText(pref.getString("knock_name", ""));
         }
 
-        findViewById(R.id.btn_ok).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(kk_enabled) {
-                    final String text = et_nickname.getText().toString();
-                    if(text.replaceAll(" ", "").equals(""))
-                        return;
-                    et_nickname.clearFocus();
-                    hideKeyboard(SettingsActivity.this, et_nickname);
-                    new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                connect("https://warm-bayou-37022.herokuapp.com/update",
-                                        "column=name&id=" + pref.getString("knock_id", "") + "&value=" + text);
-                            } catch (Exception e) {loge(e.toString());}
-                        }
-                    }.start();
-                }
+        findViewById(R.id.btn_ok).setOnClickListener(v -> {
+            if(kk_enabled) {
+                final String text = et_nickname.getText().toString();
+                if(text.replaceAll(" ", "").equals(""))
+                    return;
+                et_nickname.clearFocus();
+                hideKeyboard(SettingsActivity.this, et_nickname);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            connect("https://warm-bayou-37022.herokuapp.com/update",
+                                    "column=name&id=" + pref.getString("knock_id", "") + "&value=" + text);
+                        } catch (Exception e) {loge(e.toString());}
+                    }
+                }.start();
             }
         });
 

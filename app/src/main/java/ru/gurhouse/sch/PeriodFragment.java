@@ -105,12 +105,7 @@ public class PeriodFragment extends Fragment {
         alr.setTitle("Выберите период");
         alr.setPositiveButton("ok", myClickListener);
         toolbar.setTitle(periodname);
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                alr.show();
-            }
-        });
+        toolbar.setOnClickListener(v -> alr.show());
         setHasOptionsMenu(true);
         ((MainActivity) getActivity()).setSupportActionBar(toolbar);
         sasha("sasa");
@@ -174,24 +169,14 @@ public class PeriodFragment extends Fragment {
                     txt2.setText(" ");
             }
             final int finalI1 = i;
-            txt2.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark);
-                }
-            });
-            txt1.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark);
-                }
-            });
+            txt2.setOnClickListener(v -> SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark));
+            txt1.setOnClickListener(v -> SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark));
             layout2.addView(txt2);
             layout1.addView(txt1);
             if (periods[pernum].subjects.get(i).cells == null)
                 continue;
             for (int j = 0; j < periods[pernum].subjects.get(i).cells.size(); j++) {
-                if (periods[pernum].subjects.get(i).cells.get(j).markvalue != null && periods[pernum].subjects.get(i).cells.get(j).markvalue != "") {
+                if (periods[pernum].subjects.get(i).cells.get(j).markvalue != null && !periods[pernum].subjects.get(i).cells.get(j).markvalue.equals("")) {
                     double d = periods[pernum].subjects.get(i).cells.get(j).mktWt;
                     txts.add(new TextView(getActivity()));
                     LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -200,27 +185,23 @@ public class PeriodFragment extends Fragment {
                     try {
                         final int finalI = i;
                         final int finalJ = j;
-                        txts.get(txts.size() - 1).setOnClickListener(new View.OnClickListener() {
+                        txts.get(txts.size() - 1).setOnClickListener(v -> {
 
-                            @Override
-                            public void onClick(View v) {
-
-                                FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                                MarkFragment fragment = new MarkFragment();
-                                transaction.replace(R.id.frame, fragment);
-                                try {
-                                    fragment.coff = periods[pernum].subjects.get(finalI).cells.get(finalJ).mktWt;
-                                    fragment.data = periods[pernum].subjects.get(finalI).cells.get(finalJ).date;
-                                    fragment.markdata = periods[pernum].subjects.get(finalI).cells.get(finalJ).markdate;
-                                    fragment.teachname = periods[pernum].subjects.get(finalI).cells.get(finalJ).teachFio;
-                                    fragment.topic = periods[pernum].subjects.get(finalI).cells.get(finalJ).lptname;
-                                    fragment.value = periods[pernum].subjects.get(finalI).cells.get(finalJ).markvalue;
-                                    fragment.subject = periods[pernum].subjects.get(finalI).name;
-                                } catch (Exception ignore) {
-                                }
-                                transaction.addToBackStack(null);
-                                transaction.commit();
+                            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                            MarkFragment fragment = new MarkFragment();
+                            transaction.replace(R.id.frame, fragment);
+                            try {
+                                fragment.coff = periods[pernum].subjects.get(finalI).cells.get(finalJ).mktWt;
+                                fragment.data = periods[pernum].subjects.get(finalI).cells.get(finalJ).date;
+                                fragment.markdata = periods[pernum].subjects.get(finalI).cells.get(finalJ).markdate;
+                                fragment.teachname = periods[pernum].subjects.get(finalI).cells.get(finalJ).teachFio;
+                                fragment.topic = periods[pernum].subjects.get(finalI).cells.get(finalJ).lptname;
+                                fragment.value = periods[pernum].subjects.get(finalI).cells.get(finalJ).markvalue;
+                                fragment.subject = periods[pernum].subjects.get(finalI).name;
+                            } catch (Exception ignore) {
                             }
+                            transaction.addToBackStack(null);
+                            transaction.commit();
                         });
                     } catch (Exception ignore) {
                     }

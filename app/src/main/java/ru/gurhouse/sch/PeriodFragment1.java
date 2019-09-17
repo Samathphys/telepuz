@@ -95,12 +95,7 @@ public class PeriodFragment1 extends Fragment {
         alr.setTitle("Выберите период");
         alr.setPositiveButton("ok", myClickListener);
         toolbar.setTitle(periodname);
-        toolbar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                alr.show();
-            }
-        });
+        toolbar.setOnClickListener(v -> alr.show());
         setHasOptionsMenu(true);
         ((MainActivity) getActivity()).setSupportActionBar(toolbar);
         sasha("sasa");
@@ -173,21 +168,11 @@ public class PeriodFragment1 extends Fragment {
                 }
                 final int finalI1 = i;
                 try {
-                    txt2.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark);
-                        }
-                    });
+                    txt2.setOnClickListener(v -> SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark));
                 } catch (Exception ignore) {
                 }
                 try {
-                    txt1.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark);
-                        }
-                    });
+                    txt1.setOnClickListener(v -> SwitchToSubjectFragment(periods[pernum].subjects.get(finalI1).avg, periods[pernum].subjects.get(finalI1).cells, periods[pernum].subjects.get(finalI1).name, periods[pernum].subjects.get(finalI1).rating, periods[pernum].subjects.get(finalI1).totalmark));
                 } catch (Exception ignore) {
                 }
             }
@@ -223,23 +208,6 @@ public class PeriodFragment1 extends Fragment {
         transaction.addToBackStack(null);
         transaction.commit();
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    void F() {
-        if (pernum != 4) {
-            ((MainActivity) getActivity()).scheduleFragment.Download2(periods[4].id, 4, false, false);
-            sasha("per down" + 4);
-        }
-        if (pernum != 5) {
-            ((MainActivity) getActivity()).scheduleFragment.Download2(periods[5].id, 5, false, false);
-            sasha("per down" + 5);
-        }
-    }
-
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

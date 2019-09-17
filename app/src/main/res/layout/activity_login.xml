@@ -13,7 +13,19 @@
         android:layout_height="match_parent"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="0dp"
-        tools:visibility="invisible">
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/btn_refresh"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="24dp"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_dead"
+            app:srcCompat="@drawable/refresh"
+            tools:visibility="invisible" />
 
         <ProgressBar
             android:id="@+id/pb"
@@ -53,7 +65,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"
-        tools:visibility="visible">
+        tools:visibility="invisible">
 
         <EditText
             android:id="@+id/et_login"

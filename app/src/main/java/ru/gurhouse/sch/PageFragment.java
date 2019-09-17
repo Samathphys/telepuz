@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.widget.SwipeRefreshLayout;
+//import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -63,19 +63,10 @@ public class PageFragment extends Fragment {
             tv1.setGravity(Gravity.CENTER);
             tv1.setTextSize(30);
             tableLayout.addView(tbrow1);
-            final SwipeRefreshLayout refreshL = v.findViewById(R.id.refresh);
-            refreshL.setOnRefreshListener(() -> refreshL.setRefreshing(false));
+//            final SwipeRefreshLayout refreshL = v.findViewById(R.id.refresh);
+//            refreshL.setOnRefreshListener(() -> refreshL.setRefreshing(false));
         }
         return v;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
     }
 
     public void CreateTable() {
@@ -155,18 +146,18 @@ public class PageFragment extends Fragment {
             try {
                 StringBuilder s1 = new StringBuilder();
                 for (int j = 0; j < lesson.marks.size(); j++) {
-                    if (lesson.marks.get(j).value != null && lesson.marks.get(j).value != " " && lesson.marks.get(j).value != "") {
+                    if (lesson.marks.get(j).value != null && !lesson.marks.get(j).value.equals(" ") && !lesson.marks.get(j).value.equals("")) {
                         s1.append(lesson.marks.get(j).value);
-                        if (lesson.marks.size() > 1 && j != lesson.marks.size() - 1 && lesson.marks.get(j + 1).value != null && lesson.marks.get(j + 1).value != " " && lesson.marks.get(j + 1).value != "") {
+                        if (lesson.marks.size() > 1 && j != lesson.marks.size() - 1 && lesson.marks.get(j + 1).value != null && !lesson.marks.get(j + 1).value.equals(" ") && !lesson.marks.get(j + 1).value.equals("")) {
                             s1.append("/");
                         }
                     }
                 }
                 s1.append("\n");
                 for (int j = 0; j < lesson.marks.size(); j++) {
-                    if (lesson.marks.get(j).value != null && lesson.marks.get(j).value != " " && lesson.marks.get(j).value != "") {
+                    if (lesson.marks.get(j).value != null && !lesson.marks.get(j).value.equals(" ") && !lesson.marks.get(j).value.equals("")) {
                         s1.append(lesson.marks.get(j).coefficient);
-                        if (lesson.marks.size() > 1 && j != lesson.marks.size() - 1 && lesson.marks.get(j + 1).value != null && lesson.marks.get(j + 1).value != " " && lesson.marks.get(j + 1).value != "") {
+                        if (lesson.marks.size() > 1 && j != lesson.marks.size() - 1 && lesson.marks.get(j + 1).value != null && !lesson.marks.get(j + 1).value.equals(" ") && !lesson.marks.get(j + 1).value.equals("")) {
                             s1.append("/");
                         }
                     }
@@ -184,16 +175,6 @@ public class PageFragment extends Fragment {
             tbrow.addView(tv3);
             tableLayout.addView(tbrow);
         }
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
     }
 
     public void onSaveInstanceState(Bundle outState) {

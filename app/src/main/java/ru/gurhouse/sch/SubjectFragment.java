@@ -67,7 +67,7 @@ public class SubjectFragment extends Fragment {
             loge("subname null!");
             subname = "strange subname";
         }
-        if (subname != " " && subname != "") {
+        if (!subname.equals(" ") && !subname.equals("")) {
             TextView tv1 = new TextView(getActivity());
             tv1.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -107,24 +107,20 @@ public class SubjectFragment extends Fragment {
             tv1.setText(spans1);
             tv1.setPadding(0, 50, 0, 50);
             tv1.setGravity(Gravity.CENTER);
-            tv1.setOnClickListener(new View.OnClickListener() {
+            tv1.setOnClickListener(v1 -> {
 
-                @Override
-                public void onClick(View v) {
-
-                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                    Countcoff fragment = new Countcoff();
-                    transaction.replace(R.id.frame, fragment);
-                    try {
-                        fragment.periods = periods;
-                        fragment.subname = subname;
-                        fragment.avg = avg;
-                        fragment.period = period;
-                        fragment.pernum = pernum;
-                    } catch (Exception ignore) {}
-                    transaction.addToBackStack(null);
-                    transaction.commit();
-                }
+                FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                Countcoff fragment = new Countcoff();
+                transaction.replace(R.id.frame, fragment);
+                try {
+                    fragment.periods = periods;
+                    fragment.subname = subname;
+                    fragment.avg = avg;
+                    fragment.period = period;
+                    fragment.pernum = pernum;
+                } catch (Exception ignore) {}
+                transaction.addToBackStack(null);
+                transaction.commit();
             });
             ln1.addView(tv1);
         }
@@ -167,16 +163,6 @@ public class SubjectFragment extends Fragment {
         ((MainActivity) getActivity()).setSupActionBar(toolbar);
         ((MainActivity) getActivity()).getSupportActionBar().setHomeButtonEnabled(true);
         return v;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
     }
 
     @Override

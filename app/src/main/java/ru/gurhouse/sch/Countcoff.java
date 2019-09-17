@@ -111,84 +111,81 @@ public class Countcoff extends Fragment {
         spans.setSpan(new ForegroundColorSpan(Color.LTGRAY), 0, s.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         txt1.setText(s);
         img = v.findViewById(R.id.imageView);
-        img.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                TextView tv = new TextView(getContext());
-                final String[] newMark = new String[1];
-                final Double[] f = new Double[1];
-                alr1 = new AlertDialog.Builder(getContext());
-                alr1.setTitle("Создайте оценку");
-                View item;
-                LayoutInflater inflater = getLayoutInflater();
-                item = inflater.inflate(R.layout.mark_item, cont, false);
-                Button btn1 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(0));
-                Button btn2 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(1));
-                btn2.setClickable(false);
-                final Button btn3 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(2));
-                Spinner spinner = ((Spinner) ((ViewGroup) item).getChildAt(2));
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, marks);
-                spinner.setGravity(Gravity.CENTER);
-                spinner.setAdapter(adapter);
-                spinner.setSelection(4);
-                newMark[0] = "5";
-                f[0] = 1.0;
-                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> parent, View view,
-                                               int position, long id) {
-                        newMark[0] = marks[position];
-                    }
+        img.setOnClickListener(v1 -> {
+            TextView tv = new TextView(getContext());
+            final String[] newMark = new String[1];
+            final Double[] f = new Double[1];
+            alr1 = new AlertDialog.Builder(getContext());
+            alr1.setTitle("Создайте оценку");
+            View item;
+            LayoutInflater inflater1 = getLayoutInflater();
+            item = inflater1.inflate(R.layout.mark_item, cont, false);
+            Button btn1 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(0));
+            Button btn2 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(1));
+            btn2.setClickable(false);
+            final Button btn3 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(2));
+            Spinner spinner = ((Spinner) ((ViewGroup) item).getChildAt(2));
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, marks);
+            spinner.setGravity(Gravity.CENTER);
+            spinner.setAdapter(adapter);
+            spinner.setSelection(4);
+            newMark[0] = "5";
+            f[0] = 1.0;
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                                           int position, long id) {
+                    newMark[0] = marks[position];
+                }
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> arg0) {
-                    }
-                });
-                final EditText et2 = ((EditText) ((ViewGroup) item).getChildAt(3));
-                et2.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void afterTextChanged(Editable s) {
-                    }
+                @Override
+                public void onNothingSelected(AdapterView<?> arg0) {
+                }
+            });
+            final EditText et2 = ((EditText) ((ViewGroup) item).getChildAt(3));
+            et2.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void afterTextChanged(Editable s1) {
+                }
 
-                    @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                    }
+                @Override
+                public void beforeTextChanged(CharSequence s1, int start, int count, int after) {
+                }
 
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        sasha(String.valueOf(et2.getText()));
-                        try {
-                            f[0] = Double.valueOf(String.valueOf(et2.getText()));
-                            btn3.setClickable(true);
-                        } catch (Exception e) {
-                            btn3.setClickable(false);
-                        }
+                @Override
+                public void onTextChanged(CharSequence s1, int start, int before, int count) {
+                    sasha(String.valueOf(et2.getText()));
+                    try {
+                        f[0] = Double.valueOf(String.valueOf(et2.getText()));
+                        btn3.setClickable(true);
+                    } catch (Exception e) {
+                        btn3.setClickable(false);
                     }
-                });
-                alr1.setView(item);
-                final AlertDialog show = alr1.show();
-                btn1.setVisibility(View.INVISIBLE);
-                btn2.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        show.dismiss();
-                    }
-                });
-                btn3.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Spannable spans1 = new SpannableString(newMark[0]);
-                        spans1.setSpan(new RelativeSizeSpan(1.7f), 0, newMark[0].length(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
-                        spans1.setSpan(new ForegroundColorSpan(Color.WHITE), 0, newMark[0].length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        PeriodFragment.Cell cell = new PeriodFragment.Cell();
-                        cell.markvalue = newMark[0];
-                        cell.mktWt = f[0];
-                        cells.add(cell);
-                        makeMarks();
-                        show.dismiss();
-                    }
-                });
-            }
+                }
+            });
+            alr1.setView(item);
+            final AlertDialog show = alr1.show();
+            btn1.setVisibility(View.INVISIBLE);
+            btn2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v1) {
+                    show.dismiss();
+                }
+            });
+            btn3.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v1) {
+                    Spannable spans1 = new SpannableString(newMark[0]);
+                    spans1.setSpan(new RelativeSizeSpan(1.7f), 0, newMark[0].length(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+                    spans1.setSpan(new ForegroundColorSpan(Color.WHITE), 0, newMark[0].length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    PeriodFragment.Cell cell = new PeriodFragment.Cell();
+                    cell.markvalue = newMark[0];
+                    cell.mktWt = f[0];
+                    cells.add(cell);
+                    makeMarks();
+                    show.dismiss();
+                }
+            });
         });
 
         layout = v.findViewById(R.id.linear2);
@@ -216,12 +213,7 @@ public class Countcoff extends Fragment {
         alr.setTitle("Выбирете предмет");
         alr.setPositiveButton("ok", myClickListener);
         txt2.setText(subname);
-        txt2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                alr.show();
-            }
-        });
+        txt2.setOnClickListener(v12 -> alr.show());
         Toolbar toolbar = getActivity().findViewById(R.id.toolbar);
         toolbar.setTitle(periodname);
         setHasOptionsMenu(true);
@@ -259,100 +251,89 @@ public class Countcoff extends Fragment {
             tv1.setText(spans1);
             final int finalI = i;
             final int finalI1 = i;
-            tv1.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    final String[] newMark = new String[1];
-                    final Double[] f = new Double[1];
-                    alr1 = new AlertDialog.Builder(getContext());
-                    alr1.setTitle("Измините оценку");
-                    View item;
-                    LayoutInflater inflater = getLayoutInflater();
-                    item = inflater.inflate(R.layout.mark_item, cont, false);
-                    Button btn1 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(0));
-                    Button btn2 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(1));
-                    final Button btn3 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(2));
-                    final TextView txt1 = ((TextView) ((ViewGroup) item).getChildAt(0));
-                    TextView txt2 = ((TextView) ((ViewGroup) item).getChildAt(1));
-                    Spinner spinner = ((Spinner) ((ViewGroup) item).getChildAt(2));
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, marks);
-                    spinner.setGravity(Gravity.CENTER);
-                    spinner.setAdapter(adapter);
-                    spinner.setPrompt(s1[0]);
-                    try {
-                        int y = Integer.valueOf(s1[0]);
-                        spinner.setSelection(y - 1);
-                        newMark[0] = s1[0];
-                    } catch (Exception e) {
-                        spinner.setSelection(0);
-                        newMark[0] = "1";
-                    }
-                    f[0] = d[0];
-                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(AdapterView<?> parent, View view,
-                                                   int position, long id) {
-                            newMark[0] = marks[position];
-                        }
-
-                        @Override
-                        public void onNothingSelected(AdapterView<?> arg0) {
-                        }
-                    });
-                    final EditText et2 = ((EditText) ((ViewGroup) item).getChildAt(3));
-                    et2.setText(String.valueOf(d[0]));
-                    et2.addTextChangedListener(new TextWatcher() {
-                        @Override
-                        public void afterTextChanged(Editable s) {
-                        }
-
-                        @Override
-                        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                        }
-
-                        @Override
-                        public void onTextChanged(CharSequence s, int start, int before, int count) {
-                            sasha(String.valueOf(et2.getText()));
-                            try {
-                                f[0] = Double.valueOf(String.valueOf(et2.getText()));
-                                btn3.setClickable(true);
-                            } catch (Exception e) {
-                                sasha("errr");
-                                btn3.setClickable(false);
-                            }
-                        }
-                    });
-                    alr1.setView(item);
-                    final AlertDialog show = alr1.show();
-                    btn1.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            cells.remove(finalI);
-                            makeMarks();
-                            show.dismiss();
-                        }
-                    });
-                    btn2.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            show.dismiss();
-                        }
-                    });
-                    btn3.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Spannable spans1 = new SpannableString(newMark[0]);
-                            spans1.setSpan(new RelativeSizeSpan(1.7f), 0, newMark[0].length(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
-                            spans1.setSpan(new ForegroundColorSpan(Color.WHITE), 0, newMark[0].length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            tv1.setText(spans1);
-                            d[0] = f[0];
-                            cells.get(finalI1).markvalue = newMark[0];
-                            cells.get(finalI1).mktWt = f[0];
-                            makeMarks();
-                            show.dismiss();
-                        }
-                    });
+            tv1.setOnClickListener(v -> {
+                final String[] newMark = new String[1];
+                final Double[] f = new Double[1];
+                alr1 = new AlertDialog.Builder(getContext());
+                alr1.setTitle("Измините оценку");
+                View item;
+                LayoutInflater inflater = getLayoutInflater();
+                item = inflater.inflate(R.layout.mark_item, cont, false);
+                Button btn1 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(0));
+                Button btn2 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(1));
+                final Button btn3 = ((Button) ((ViewGroup) ((ViewGroup) item).getChildAt(5)).getChildAt(2));
+                final TextView txt1 = ((TextView) ((ViewGroup) item).getChildAt(0));
+                TextView txt2 = ((TextView) ((ViewGroup) item).getChildAt(1));
+                Spinner spinner = ((Spinner) ((ViewGroup) item).getChildAt(2));
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), R.layout.spinner_item, marks);
+                spinner.setGravity(Gravity.CENTER);
+                spinner.setAdapter(adapter);
+                spinner.setPrompt(s1[0]);
+                try {
+                    int y = Integer.valueOf(s1[0]);
+                    spinner.setSelection(y - 1);
+                    newMark[0] = s1[0];
+                } catch (Exception e) {
+                    spinner.setSelection(0);
+                    newMark[0] = "1";
                 }
+                f[0] = d[0];
+                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view,
+                                               int position, long id) {
+                        newMark[0] = marks[position];
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> arg0) {
+                    }
+                });
+                final EditText et2 = ((EditText) ((ViewGroup) item).getChildAt(3));
+                et2.setText(String.valueOf(d[0]));
+                et2.addTextChangedListener(new TextWatcher() {
+                    @Override
+                    public void afterTextChanged(Editable s) {
+                    }
+
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        sasha(String.valueOf(et2.getText()));
+                        try {
+                            f[0] = Double.valueOf(String.valueOf(et2.getText()));
+                            btn3.setClickable(true);
+                        } catch (Exception e) {
+                            sasha("errr");
+                            btn3.setClickable(false);
+                        }
+                    }
+                });
+                alr1.setView(item);
+                final AlertDialog show = alr1.show();
+                btn1.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        cells.remove(finalI);
+                        makeMarks();
+                        show.dismiss();
+                    }
+                });
+                btn2.setOnClickListener(v1 -> show.dismiss());
+                btn3.setOnClickListener(v12 -> {
+                    Spannable spans11 = new SpannableString(newMark[0]);
+                    spans11.setSpan(new RelativeSizeSpan(1.7f), 0, newMark[0].length(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+                    spans11.setSpan(new ForegroundColorSpan(Color.WHITE), 0, newMark[0].length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    tv1.setText(spans11);
+                    d[0] = f[0];
+                    cells.get(finalI1).markvalue = newMark[0];
+                    cells.get(finalI1).mktWt = f[0];
+                    makeMarks();
+                    show.dismiss();
+                });
             });
 
             if (d[0] <= 0.5)

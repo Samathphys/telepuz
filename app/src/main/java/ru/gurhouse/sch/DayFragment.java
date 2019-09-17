@@ -23,11 +23,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
-import java.util.Locale;
 
 import static ru.gurhouse.sch.LoginActivity.loge;
 

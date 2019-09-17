@@ -54,6 +54,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
     String[] period;
     boolean first = true;
     private int USER_ID;
+    private Context context;
 
     TextView []tv = new TextView[7];
     int day;
@@ -123,7 +124,8 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        log("oncreateview");
+        if(super.getContext() != null)
+            context = super.getContext();
         if(v == null)
             v = inflater.inflate(R.layout.fragment_schedule, container, false);
         if(!READY) {
@@ -132,7 +134,6 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
         }
         if(!shown && periods[pernum].days != null)
             show();
-        log("oncreateview2");
         return v;
     }
 
@@ -154,7 +155,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                         //z = true;
                         pageFragments.get(i).day = periods[pernum].days.get(y);
                         if (y + 1 - periods[pernum].days.size() == 0) {
-                            loge("break");
+                            log("diary drawing ended");
                             break;
                         } else {
                             y++;
@@ -306,14 +307,14 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
     }
 
     void Download1() {
-        log("Dowload1()");
+        log("Download1()");
         new Thread() {
             @Override
             public void run() {
                 try {
                     JSONArray array3 = new JSONArray(
                             connect("https://app.eschool.center/ec-server/dict/periods2?year=" + yearname,
-                            null, getContext()));
+                            null));
                     for (int i = 0; i < array3.length(); i++) {
                         if (array3.getJSONObject(i).getInt("typeId") == 1) {
                             JSONArray array4 = array3.getJSONObject(i).getJSONArray("items");
@@ -384,6 +385,12 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                     } else {
                         Download2(periods[6].id, 6, true, true);
                     }
+                } catch (LoginActivity.NoInternetException e) {
+                    getActivity().runOnUiThread(()->{
+                        TextView tv = getView().findViewById(R.id.tv_error);
+                        tv.setText("Нет соединения с интернетом");
+                        tv.setVisibility(View.VISIBLE);
+                    });
                 } catch (Exception e) {
                     loge("Download1() " + e.toString());
                     sasha(String.valueOf(e));
@@ -393,14 +400,14 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
     }
 
     void Download3() {
-        log("Dowload3()");
+        log("Download3()");
         new Thread() {
             @Override
             public void run() {
                 try {
                     JSONArray array1 = new JSONArray(
                             connect("https://app.eschool.center/ec-server/yearplan/academyears",
-                                    null, getContext()));
+                                    null));
                     JSONObject object1;
                     for (int i = 0; i < array1.length(); i++) {
                         object1 = array1.getJSONObject(i);
@@ -412,7 +419,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                     sasha("1-----------------------1");
                     JSONObject object = new JSONObject(
                             connect("https://app.eschool.center/ec-server/student/getTotalMarks?yearid=" + yeatid + "&userid=" + USER_ID + "&json=true",
-                                    null, getContext()));
+                                    null));
                     object = object.getJSONObject("RegisterOfClass");
                     object = object.getJSONObject("User");
                     JSONArray array = object.getJSONArray("Result");
@@ -434,6 +441,8 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                             }
                         }
                     }
+                } catch (LoginActivity.NoInternetException e) {
+                   Toast.makeText(getContext(), "Нет интернета", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     sasha("3333  " + e);
                 }
@@ -444,7 +453,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
     JSONObject object1 = null;
     boolean first_downl = true;
     void Download2(final int id, final int h, final boolean isone, final boolean istwo) {
-        log("Dowload2()");
+        log("Download2()");
         if(first_downl && TheSingleton.getInstance().t1 == 0) {
             log("start");
             TheSingleton.getInstance().t1 = System.currentTimeMillis();
@@ -470,7 +479,8 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                             try {
                                 object1 = new JSONObject(
                                         connect("https://app.eschool.center/ec-server/student/getDiaryPeriod?userId=" + USER_ID + "&eiId=" + id,
-                                                null, getContext()));
+                                                null));
+                            } catch (LoginActivity.NoInternetException ignore) {
                             } catch (Exception e) {
                                 e.printStackTrace();
                                 loge(e.toString());
@@ -480,7 +490,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
 
                     JSONObject object = new JSONObject(
                             connect("https://app.eschool.center/ec-server/student/getDiaryUnits?userId=" + USER_ID + "&eiId=" + id,
-                                    null, getContext()));
+                                    null));
                     if(!object.has("result"))
                         log("lol no result: " + object.toString());
                     JSONArray array = object.getJSONArray("result");
@@ -507,35 +517,42 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                         periods[pernum].subjects.add(subject);
                     }
 
-                    while(true) {
-                        if(object1 != null)
-                            break;
+                    while (object1 == null) {
                         Thread.sleep(10);
                     }
 
                     if(!object1.has("result"))
                         log("kek no result: " + object1.toString());
                     JSONArray arraydaylessons = object1.getJSONArray("result");
-                    for (int i = 0; i < arraydaylessons.length(); i++) {
-                        object1 = arraydaylessons.getJSONObject(i);
-                        PeriodFragment.Cell call = new PeriodFragment.Cell();
-                        if (object1.has("lptName"))
-                            call.lptname = object1.getString("lptName");
-                        if (object1.has("markDate"))
-                            call.markdate = object1.getString("markDate");
-                        if (object1.has("lessonId"))
-                            call.lessonid = object1.getLong("lessonId");
-                        if (object1.has("markVal"))
-                            call.markvalue = object1.getString("markVal");
-                        if (object1.has("mktWt"))
-                            call.mktWt = object1.getDouble("mktWt");
-                        if (object1.has("teachFio"))
-                            call.teachFio = object1.getString("teachFio");
-                        if (object1.has("startDt"))
-                            call.date = object1.getString("startDt");
-                        if (object1.has("unitId"))
-                            call.unitid = object1.getInt("unitId");
-                        periods[pernum].cells.add(call);
+                    //log("arraydaylessons.length() " + arraydaylessons.length());
+                    while(true) {
+                        for (int i = 0; i < arraydaylessons.length(); i++) {
+                            object1 = arraydaylessons.getJSONObject(i);
+                            PeriodFragment.Cell call = new PeriodFragment.Cell();
+                            if (object1.has("lptName"))
+                                call.lptname = object1.getString("lptName");
+                            if (object1.has("markDate"))
+                                call.markdate = object1.getString("markDate");
+                            if (object1.has("lessonId"))
+                                call.lessonid = object1.getLong("lessonId");
+                            if (object1.has("markVal"))
+                                call.markvalue = object1.getString("markVal");
+                            if (object1.has("mktWt"))
+                                call.mktWt = object1.getDouble("mktWt");
+                            if (object1.has("teachFio"))
+                                call.teachFio = object1.getString("teachFio");
+                            if (object1.has("startDt"))
+                                call.date = object1.getString("startDt");
+                            if (object1.has("unitId"))
+                                call.unitid = object1.getInt("unitId");
+                            periods[pernum].cells.add(call);
+                        }
+                        if(arraydaylessons.length() != 0)
+                            break;
+                        object1 = new JSONObject(
+                                connect("https://app.eschool.center/ec-server/student/getDiaryPeriod?userId=" + USER_ID + "&eiId=" + id,
+                                        null));
+                        arraydaylessons = object1.getJSONArray("result");
                     }
 
                     String s1 = periods[pernum].cells.get(0).date;
@@ -545,7 +562,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                     long d2 = format.parse(s2).getTime();
                     JSONObject object2 = new JSONObject(
                             connect("https://app.eschool.center/ec-server/student/diary?" +
-                                    "userId=" + USER_ID + "&d1=" + d1 + "&d2=" + d2, null, getContext()));
+                                    "userId=" + USER_ID + "&d1=" + d1 + "&d2=" + d2, null));
                     JSONArray array2 = object2.getJSONArray("lesson");
 
                     Long day1 = 0L;
@@ -764,7 +781,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                             lin2 = new LinearLayout(getContext());
                             lin2.setOrientation(LinearLayout.HORIZONTAL);
                             lin2.setGravity(Gravity.CENTER);
-                            txt = new TextView(getActivity());
+                            txt = new TextView(getContext());
                             txt.setGravity(Gravity.CENTER);
                             txt.setTextSize(20);
                             s = "";
@@ -800,7 +817,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
 //                                                txt1.setGravity(Gravity.CENTER);
 //                                                txt1.setTextColor(Color.WHITE);
 //                                                txt1.setPadding(15, 0, 15, 0);
-                                                txt1 = new Kletka(getActivity().getApplicationContext());
+                                                txt1 = new Kletka(getContext());
                                                 a += System.currentTimeMillis()-t1;
                                                 t1 = System.currentTimeMillis();
                                                 final double d = less.marks.get(l).coefficient;
@@ -867,7 +884,7 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                                     lin1 = new LinearLayout(getContext());
                                     lin1.setOrientation(LinearLayout.HORIZONTAL);
                                     lin1.setGravity(Gravity.CENTER);
-                                    txt1 = new TextView(getActivity());
+                                    txt1 = new TextView(getContext());
                                     txt1.setGravity(Gravity.CENTER);
                                     txt1.setTextSize(20);
                                     lp3 = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -911,6 +928,10 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
 
 
                     //---------------------------------------------------------------------------------------------------------------------------------
+                } catch (LoginActivity.NoInternetException e) {
+                    TextView tv = getView().findViewById(R.id.tv_error);
+                    tv.setVisibility(View.VISIBLE);
+                    tv.setText("Нет интернета");
                 } catch (Exception e) {
                     sasha("second " + e);
                     e.printStackTrace();
@@ -992,6 +1013,10 @@ public class ScheduleFragment extends Fragment implements DatePickerDialog.OnDat
                 toolbar.setTitle("Дневник");
         }
         super.onResume();
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     private class MyFragmentPagerAdapter extends FragmentPagerAdapter {

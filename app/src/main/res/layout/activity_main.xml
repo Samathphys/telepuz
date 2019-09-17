@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"   
+        android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
@@ -24,25 +25,12 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
 
-        <android.support.design.widget.BottomNavigationView
-            android:id="@+id/bottomnav"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?android:attr/windowBackground"
-            app:itemIconTint="@color/bottomnav_colors"
-            app:itemTextColor="@color/bottomnav_colors"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:menu="@menu/navigation"
-            app:labelVisibilityMode="unlabeled"/>
-
         <android.support.constraint.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toTopOf="@+id/bottomnav"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0">
@@ -59,7 +47,43 @@
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/refresh"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="24dp"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="@+id/tv_error"
+                app:layout_constraintStart_toStartOf="@+id/tv_error"
+                app:layout_constraintTop_toBottomOf="@+id/tv_error"
+                app:srcCompat="@drawable/refresh" />
+
+            <TextView
+                android:id="@+id/tv_error"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Error"
+                android:textSize="18sp"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/frame" />
         </android.support.constraint.ConstraintLayout>
+
+        <android.support.design.widget.BottomNavigationView
+            android:id="@+id/bottomnav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/windowBackground"
+            app:itemIconTint="@color/bottomnav_colors"
+            app:itemTextColor="@color/bottomnav_colors"
+            app:labelVisibilityMode="unlabeled"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:menu="@menu/navigation" />
     </android.support.constraint.ConstraintLayout>
 
     <android.support.constraint.ConstraintLayout

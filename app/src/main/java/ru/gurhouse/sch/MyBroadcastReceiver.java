@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -60,7 +61,9 @@ public class MyBroadcastReceiver extends BroadcastReceiver {
                     public void run() {
                         try {
                             connect("https://app.eschool.center/ec-server/chat/readAll?threadId=" + intent.getIntExtra("threadId", -1),
-                                    null, context);
+                                    null);
+                        } catch (LoginActivity.NoInternetException e) {
+                            Toast.makeText(context, "Нет доступа к интернету", Toast.LENGTH_SHORT).show();
                         } catch (IOException e) {
                             loge(e.toString());
                         }

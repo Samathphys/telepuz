@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,6 +31,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -42,33 +42,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
-
-import io.grpc.internal.IoUtils;
 
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
 import static android.view.View.GONE;
-import static java.util.Calendar.getAvailableCalendarTypes;
-import static ru.gurhouse.sch.LoginActivity.connect;
-import static ru.gurhouse.sch.LoginActivity.log;
-import static ru.gurhouse.sch.LoginActivity.loge;
 import static java.util.Calendar.MONTH;
 import static java.util.Calendar.YEAR;
 import static java.util.Calendar.getInstance;
+import static ru.gurhouse.sch.LoginActivity.connect;
+import static ru.gurhouse.sch.LoginActivity.log;
+import static ru.gurhouse.sch.LoginActivity.loge;
 
 public class ChatFragment extends Fragment {
 
@@ -161,7 +152,8 @@ public class ChatFragment extends Fragment {
                     getContext().getSharedPreferences("pref", 0).getString("muted", "[]")
                             .contains("" + threadId)?"Включить уведомления":"Отключить уведомления")
                     .setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-            menu.add(0, 2, 1, "Покинуть беседу");
+            if(group)
+                menu.add(0, 2, 1, "Покинуть беседу");
         }
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -194,7 +186,9 @@ public class ChatFragment extends Fragment {
                 @Override
                 public void run() {
                     try {
-                        connect("https://app.eschool.center/ec-server/chat/leave?threadId=" + threadId, null, getContext());
+                        connect("https://app.eschool.center/ec-server/chat/leave?threadId=" + threadId, null);
+                    } catch (LoginActivity.NoInternetException e) {
+                        Toast.makeText(getContext(), "Нет интернета", Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {loge(e);}
                 }
             }.start();
@@ -208,6 +202,9 @@ public class ChatFragment extends Fragment {
                 public void run() {
                     try {
                         download(h);
+                    } catch (LoginActivity.NoInternetException e) {
+                        getActivity().runOnUiThread(() ->
+                                Toast.makeText(getContext(), "Нет доступа к интернету", Toast.LENGTH_SHORT).show());
                     } catch (Exception e) {
                         loge(e.toString());
                     }
@@ -295,6 +292,21 @@ public class ChatFragment extends Fragment {
     public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         if(first_time) {
             scroll = view.findViewById(R.id.scroll);
+            view.findViewById(R.id.btn_refresh).setOnClickListener((v)->{
+                view.findViewById(R.id.tv_error).setVisibility(View.INVISIBLE);
+                v.setVisibility(View.INVISIBLE);
+                new Thread(() -> {
+                    try {
+                        download(h);
+                    } catch (LoginActivity.NoInternetException e) {
+                        getActivity().runOnUiThread(() -> {
+                            v.setVisibility(View.VISIBLE);
+                            view.findViewById(R.id.tv_error).setVisibility(View.VISIBLE);
+                        });
+                    } catch (Exception e) {
+                        loge(e.toString());
+                    }}).start();
+            });
 
             ViewTreeObserver.OnScrollChangedListener listener = () -> {
                 if (scroll != null) {
@@ -366,12 +378,9 @@ public class ChatFragment extends Fragment {
                                             }
                                             tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f " + s + ")", size));
                                             tv_attach.setTextColor(getResources().getColor(R.color.two));
-                                            tv_attach.setOnClickListener(new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
-                                                    ((MainActivity) getActivity()).saveFile(url, a.name, true);
-                                                }
+                                            tv_attach.setOnClickListener(v -> {
+                                                String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
+                                                ((MainActivity) getActivity()).saveFile(url, a.name, true);
                                             });
                                             ((LinearLayout) item.findViewById(R.id.attach)).addView(tv_attach);
                                         }
@@ -392,8 +401,14 @@ public class ChatFragment extends Fragment {
                             @Override
                             public void run() {
                                 try {
-                                    JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
-                                            "isSearch=false&rowStart=1&rowsCount=25&threadId=" + threadId + "&msgStart=" + last_msg, null, context));
+                                    JSONArray array;
+                                    try {
+                                        array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
+                                                "isSearch=false&rowStart=1&rowsCount=25&threadId=" + threadId + "&msgStart=" + last_msg, null));
+                                    } catch (LoginActivity.NoInternetException e) {
+                                        Toast.makeText(getContext(), "Нет интернета", Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
                                     if(array.length() == 0) {
                                         last_msg = 0;
                                     }
@@ -499,12 +514,9 @@ public class ChatFragment extends Fragment {
                                             }
                                             tv_attach.setText(String.format(Locale.getDefault(), a.name + " (%.2f " + s + ")", size));
                                             tv_attach.setTextColor(getResources().getColor(R.color.two));
-                                            tv_attach.setOnClickListener(new View.OnClickListener() {
-                                                @Override
-                                                public void onClick(View v) {
-                                                    String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
-                                                    ((MainActivity) getActivity()).saveFile(url, a.name, true);
-                                                }
+                                            tv_attach.setOnClickListener(v -> {
+                                                String url = "https://app.eschool.center/ec-server/files/" + a.fileId;
+                                                ((MainActivity) getActivity()).saveFile(url, a.name, true);
                                             });
                                             ((LinearLayout) item.findViewById(R.id.attach)).addView(tv_attach);
                                         }
@@ -512,13 +524,7 @@ public class ChatFragment extends Fragment {
                                         item.findViewById(R.id.attach).setVisibility(GONE);
                                     container.addView(item);
                                 }
-                                scroll.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        //if(container.getChildCount() >= 25 && msg.length > 0)
-                                        //scroll.scrollTo(0, container.getChildAt(msg.length-1).getBottom());
-                                    }
-                                });
+                                // todo scroll ?
                                 uploading = false;
                                 first_msgs.remove(first_msgs.size() - 1);
                             }
@@ -528,7 +534,7 @@ public class ChatFragment extends Fragment {
                             public void run() {
                                 try {
                                     JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&" +
-                                            "isSearch=false&rowStart=0&rowsCount=25&threadId=" + threadId + "&msgStart=" + (first_msgs.get(first_msgs.size() - 1) + 1), null, context));
+                                            "isSearch=false&rowStart=0&rowsCount=25&threadId=" + threadId + "&msgStart=" + (first_msgs.get(first_msgs.size() - 1) + 1), null));
 
                                     messages = new Msg[array.length()];
                                     for (int i = 0; i < messages.length; i++) {
@@ -561,6 +567,8 @@ public class ChatFragment extends Fragment {
                                         msg.text = tmp.getString("msg");
                                     }
                                     h.sendEmptyMessage(0);
+                                } catch (LoginActivity.NoInternetException e) {
+                                    Toast.makeText(getContext(), "Нет интернета", Toast.LENGTH_SHORT).show();
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                     loge("on scroll bottom: " + e.toString());
@@ -693,17 +701,15 @@ public class ChatFragment extends Fragment {
                                         scroll.post(() -> scroll.fullScroll(ScrollView.FOCUS_DOWN));
                                     });
                                     if(!files.isEmpty()) {
-                                        try {
-                                            uploadFile(new File(files.get(0).getPath()));
-                                            ChatFragment.this.sendMessage(threadId, text);
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                            loge("sendFile: " + e.toString());
-                                        }
+                                        //uploadFile(new File(files.get(0).getPath()));
+                                        ChatFragment.this.sendMessage(threadId, text);
                                     } else {
                                         connect("https://app.eschool.center/ec-server/chat/sendNew",  "threadId=" + threadId + "&msgText=" + text +
-                                                "&msgUID=" + System.currentTimeMillis(), context);
+                                                "&msgUID=" + System.currentTimeMillis());
                                     }
+                                } catch (LoginActivity.NoInternetException e) {
+                                    Toast.makeText(getContext(), "Нет интернета", Toast.LENGTH_SHORT).show();
+                                    container.removeViewAt(container.getChildCount()-1);
                                 } catch (Exception e) {
                                     loge("rar: " + e.toString());
                                     e.printStackTrace();
@@ -721,6 +727,13 @@ public class ChatFragment extends Fragment {
                 public void run() {
                     try {
                         download(h);
+                    } catch (LoginActivity.NoInternetException e) {
+                        getActivity().runOnUiThread(()->{
+                            TextView tv = view.findViewById(R.id.tv_error);
+                            tv.setText("Нет доступа к интернету");
+                            tv.setVisibility(View.VISIBLE);
+                            view.findViewById(R.id.btn_refresh).setVisibility(View.VISIBLE);
+                        });
                     } catch (Exception e) {
                         e.printStackTrace();
                         loge("onViewCreated() run: " + e.toString());
@@ -736,12 +749,13 @@ public class ChatFragment extends Fragment {
         super.onDetach();
     }
 
-    private void download(Handler h) throws IOException, JSONException {
+    private void download(Handler h) throws IOException, JSONException, LoginActivity.NoInternetException {
         new Thread() {
             @Override
             public void run() {
                 try {
-                    connect("https://app.eschool.center/ec-server/chat/readAll?threadId=" + threadId, null, context);
+                    connect("https://app.eschool.center/ec-server/chat/readAll?threadId=" + threadId, null);
+                } catch (LoginActivity.NoInternetException ignore) {
                 } catch (Exception e) {
                     e.printStackTrace();
                     loge(e.toString());
@@ -756,7 +770,7 @@ public class ChatFragment extends Fragment {
         last_msg = -1;
         do {
             JSONArray array = new JSONArray(connect("https://app.eschool.center/ec-server/chat/messages?getNew=false&isSearch=false&" +
-                    "rowStart=1&rowsCount=25&threadId=" + threadId + (last_msg == -1?"":"&msgStart="+last_msg), null, getContext()));
+                    "rowStart=1&rowsCount=25&threadId=" + threadId + (last_msg == -1?"":"&msgStart="+last_msg), null));
             messages = new Msg[array.length()];
             for (int i = 0; i < messages.length; i++) {
                 messages[i] = new Msg();
@@ -823,6 +837,8 @@ public class ChatFragment extends Fragment {
                 int code = httpAsyncClient.execute(post).getStatusLine().getStatusCode();
                 System.out.println(code);
                 log("sending file code " + code);
+            } catch (UnknownHostException e) {
+                Toast.makeText(getContext(), "Нет интернета", Toast.LENGTH_SHORT).show();
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             } catch (ProtocolException e) {

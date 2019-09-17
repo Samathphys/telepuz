@@ -45,13 +45,13 @@ public class TotalMarks extends Fragment {
 
         for (int i = 0; i < s[0].size(); i++) {
             TableRow tableRow = new TableRow(getContext());
-            for (int j = 0; j < s.length; j++) {
+            for (ArrayList<String> strings : s) {
                 TextView txt = new TextView(getContext());
                 if (i == 0) {
-                    txt.setText(s[j].get(i));
+                    txt.setText(strings.get(i));
                     txt.setLineSpacing(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5.0f, getResources().getDisplayMetrics()), 0.4f);
                 } else {
-                    txt.setText(s[j].get(i));
+                    txt.setText(strings.get(i));
                 }
                 txt.setGravity(Gravity.CENTER);
                 tableRow.addView(txt);
@@ -69,16 +69,6 @@ public class TotalMarks extends Fragment {
                 f += "\n";
         }
         return f;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
     }
 
     @Override

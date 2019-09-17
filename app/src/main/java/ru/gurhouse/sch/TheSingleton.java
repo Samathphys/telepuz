@@ -5,6 +5,7 @@ import java.util.ArrayList;
 class TheSingleton {
     private static final TheSingleton ourInstance = new TheSingleton();
     private String COOKIE, ROUTE, fb_id;
+    String login, hash;
     private int USER_ID, PERSON_ID;
     private ArrayList<PeriodFragment.Subject> subjects;
     private boolean hasNotifications = false;

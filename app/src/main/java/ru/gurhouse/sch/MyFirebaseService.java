@@ -67,6 +67,9 @@ public class MyFirebaseService extends FirebaseMessagingService {
                     return;
                 }
                 PeriodFragment.Subject s;
+                PendingIntent res = TaskStackBuilder.create(this)
+                        .addNextIntentWithParentStack(new Intent(this, LoginActivity.class))
+                        .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
                 for (int i = 0; i < subjects.size(); i++) {
                     s = subjects.get(i);
                     if (s.unitid == unitId) {
@@ -75,7 +78,8 @@ public class MyFirebaseService extends FirebaseMessagingService {
                         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "1");
                         builder.setContentText(s.name + ": " + val + " с коэф. " + coef)
                                 .setContentTitle("Новая оценка")
-                                .setSmallIcon(R.drawable.alternative);
+                                .setSmallIcon(R.drawable.alternative)
+                                .setContentIntent(res);
                         Notification notif = builder.build();
                         compat.notify(TheSingleton.getInstance().notification_id++, notif);
                         TheSingleton.getInstance().setHasNotifications();
@@ -138,7 +142,7 @@ public class MyFirebaseService extends FirebaseMessagingService {
                     PendingIntent resultPendingIntent =
                             stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
                     stackBuilder.editIntentAt(0).putExtra("notif", true)
-                            .putExtra("type", "msg").putExtra("threadId", thread_id);
+                            .putExtra("type", "msg").putExtra("threadId", thread_id).putExtra("count", addrCnt);
 
                     PendingIntent actionIntent = PendingIntent.getBroadcast(this, thread_id,
                             new Intent(this, MyBroadcastReceiver.class).putExtra("action", MyBroadcastReceiver.ACTION_READ)
